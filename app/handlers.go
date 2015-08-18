@@ -5,6 +5,12 @@ import "net/http"
 // handleRoot renders the home page or redirects if ping timeout is
 // reached.
 func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
+	// The "/" pattern matches with everything, so we need to check
+	// that we are root here.
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
 
 }
 
@@ -39,6 +45,11 @@ func (app *App) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 // handleLive handles the live server request
 func (app *App) handleLive(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// handleLive handles the live server request
+func (app *App) handleLiveStats(w http.ResponseWriter, r *http.Request) {
 
 }
 
