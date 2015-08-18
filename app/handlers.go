@@ -11,7 +11,12 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	w.Write([]byte("I'm up"))
+}
 
+// handleWorkload sends workload to worker goroutines.
+func (app *App) handleHelloWorld(w http.ResponseWriter, r *http.Request) {
+	app.Render("helloWorld", w, r, map[string]interface{}{"Text": "Hello World!"})
 }
 
 // handleWorkload sends workload to worker goroutines.

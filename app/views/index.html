@@ -35,7 +35,7 @@
         <script type="text/javascript" src="/static/js/metrics_graphs.js"></script>
 
          <script type="text/javascript">
-            var livemode = {{ 'true' if live else 'false' }};
+            var livemode = {{ 'true' if live else 'false' }} {{if .Live }}true{{else}}false{{end}};
             var redirected = {{ 'true' if redirected else 'false' }};
             var g_settings = {{ settings.get_dict()|tojson|safe }};
             g_settings["dial_max_value"] = dial_max_value;

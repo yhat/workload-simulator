@@ -1,8 +1,12 @@
 package app
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"path/filepath"
+	"text/template"
 )
 
 // OpsConfig is a type used to define the target Ops
@@ -19,6 +23,7 @@ type AppConfig struct {
 	Port      int
 	MaxDial   int
 	PublicDir string
+	ViewsDir  string
 	ReportDir string
 }
 
@@ -29,7 +34,10 @@ type App struct {
 	port      int
 	maxDial   int
 	reportDir string
+	viewsDir  string
 	public    string
+
+	templates map[string]*template.Template
 
 	// http router
 	router http.Handler
@@ -45,10 +53,10 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.router.ServeHTTP(w, r)
 }
 
-// NewApp constructs a pointer to a new App and returns any error encountered.
-func NewApp(config *AppConfig) (*App, error) {
+// New constructs a pointer to a new App and returns any error encountered.
+func New(config *AppConfig) (*App, error) {
 	if config.PublicDir == "" {
-		config.PublicDir = "/var/workload-simulator/public"
+		config.PublicDir = "/var/workload-simulator/public/static"
 	}
 
 	// OpsConfig can be nil on start since it is specified by the UI.
@@ -57,11 +65,15 @@ func NewApp(config *AppConfig) (*App, error) {
 		port:      config.Port,
 		maxDial:   config.MaxDial,
 		reportDir: config.ReportDir,
+		viewsDir:  config.ViewsDir,
+		public:    config.PublicDir,
+
+		templates: make(map[string]*template.Template),
 	}
 
 	// Register handlers with ServeMux.
 	r := http.NewServeMux()
-
+	log.Printf("app.public %s", app.public)
 	// Static assets
 	serveStatic := func(name string) {
 		fs := http.FileServer(http.Dir(filepath.Join(app.public, name)))
@@ -75,6 +87,7 @@ func NewApp(config *AppConfig) (*App, error) {
 	serveStatic(`lang`)
 
 	r.HandleFunc("/", app.handleRoot)
+	r.HandleFunc("/helloWorld", app.handleHelloWorld)
 	r.HandleFunc("/workload", app.handleWorkload)
 	r.HandleFunc("/ping", app.handlePing)
 	r.HandleFunc("/unload", app.handleUnload)
@@ -90,4 +103,39 @@ func NewApp(config *AppConfig) (*App, error) {
 	app.router = r
 
 	return &app, nil
+}
+
+func (app *App) compileTemplates(viewsDir string) error {
+	templatesListing, err := ioutil.ReadDir(viewsDir)
+	if err != nil {
+		return fmt.Errorf("%s", err.Error())
+	}
+
+	for _, info := range templatesListing {
+		templatePath := filepath.Join(viewsDir, info.Name())
+		t, err := template.New("").ParseFiles(templatePath)
+		if err != nil {
+			return fmt.Errorf("%v", err)
+		}
+		app.templates[info.Name()] = t
+	}
+	return nil
+}
+
+func (app *App) Render(name string, w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	if err := app.compileTemplates(app.viewsDir); err != nil {
+		msg := fmt.Sprintf("error compiling templates: %v", err)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	templateName := name + ".html"
+	t, _ := app.templates[templateName]
+	if err := t.ExecuteTemplate(w, templateName, data); err != nil {
+		log.Printf("error rendering template %s: %v", templateName, err)
+	}
+
 }
