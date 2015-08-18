@@ -43,8 +43,8 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // NewApp constructs a pointer to a new App and returns any error
 // encountered.
 func NewApp(config *AppConfig) (*App, error) {
-	// OpsConfig can be nil on start since it is specified by
-	// the UI. Same with workerProcs
+	// OpsConfig can be nil on start since it is specified by the UI.
+	// Same with workerProcs.
 	app := App{
 		host:      config.Host,
 		port:      config.Port,
