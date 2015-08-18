@@ -1,6 +1,9 @@
 package app
 
-import "net/http"
+import (
+	"net/http"
+	"path/filepath"
+)
 
 // OpsConfig is a type used to define the target Ops
 // server
@@ -10,11 +13,12 @@ type OpsConfig struct {
 	User   string
 }
 
+// Configuration for web app.
 type AppConfig struct {
-	// Configuration for web app.
 	Host      string
 	Port      int
 	MaxDial   int
+	PublicDir string
 	ReportDir string
 }
 
@@ -25,6 +29,7 @@ type App struct {
 	port      int
 	maxDial   int
 	reportDir string
+	public    string
 
 	// http router
 	router http.Handler
@@ -40,11 +45,13 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.router.ServeHTTP(w, r)
 }
 
-// NewApp constructs a pointer to a new App and returns any error
-// encountered.
+// NewApp constructs a pointer to a new App and returns any error encountered.
 func NewApp(config *AppConfig) (*App, error) {
+	if config.PublicDir == "" {
+		config.PublicDir = "/var/workload-simulator/public"
+	}
+
 	// OpsConfig can be nil on start since it is specified by the UI.
-	// Same with workerProcs.
 	app := App{
 		host:      config.Host,
 		port:      config.Port,
@@ -52,8 +59,20 @@ func NewApp(config *AppConfig) (*App, error) {
 		reportDir: config.ReportDir,
 	}
 
-	// Register handlers with ServeMux
+	// Register handlers with ServeMux.
 	r := http.NewServeMux()
+
+	// Static assets
+	serveStatic := func(name string) {
+		fs := http.FileServer(http.Dir(filepath.Join(app.public, name)))
+		prefix := "/" + name + "/"
+		r.Handle(prefix, http.StripPrefix(prefix, fs))
+	}
+
+	serveStatic(`img`)
+	serveStatic(`css`)
+	serveStatic(`js`)
+	serveStatic(`lang`)
 
 	r.HandleFunc("/", app.handleRoot)
 	r.HandleFunc("/workload", app.handleWorkload)
@@ -67,7 +86,8 @@ func NewApp(config *AppConfig) (*App, error) {
 	r.HandleFunc("/save", app.handleSave)
 	r.HandleFunc("/kill", app.handleKill)
 
-	// add router to app
+	// Add router to app.
 	app.router = r
+
 	return &app, nil
 }
