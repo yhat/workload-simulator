@@ -31,21 +31,25 @@
         <!-- MemSQL Libraries -->
         <script type="text/javascript" src="/static/js/query_dial.js"></script>
         <script type="text/javascript" src="/static/js/query_graphs.js"></script>
+        <script type="text/javascript">
+	    var livemode = {{if .Live }} true {{else}} false {{end}};
+            var redirected = {{if .Redirected }}true{{else}}false{{end}};
+	    var g_settings = {};
+	    g_settings["memsql_host"] = "a"
+	    g_settings["memsql_port"] = "b"
+	    g_settings["memsql_user"] = "c"
+	    g_settings["memsql_pass"] = "d"
+	    g_settings["memsql_db"] = 10
+	    console.log(g_settings);
+        </script>
         <script type="text/javascript" src="/static/js/common.js"></script>
         <script type="text/javascript" src="/static/js/metrics_graphs.js"></script>
 
-         <script type="text/javascript">
-            var livemode = {{ 'true' if live else 'false' }} {{if .Live }}true{{else}}false{{end}};
-            var redirected = {{ 'true' if redirected else 'false' }};
-            var g_settings = {{ settings.get_dict()|tojson|safe }};
-            g_settings["dial_max_value"] = dial_max_value;
-        </script>
-
-       {% if live %}
+       {{ if .Live }}
         <script type="text/javascript" src="/static/js/live.js"></script>
-        {% else %}
+        {{ else }}
         <script type="text/javascript" src="/static/js/stress.js"></script>
-        {% endif %}
+        {{ end }}
     </head>
 
     <body>
@@ -54,35 +58,35 @@
                 <div class="span3" id="settings-container">
                     <a href="#" id="settings-button"  class="btn"><i class="icon-cog"></i> Settings</a>
 
-                    {% if not live %}
+                    {{ if not .Live }}
                     <a href="#" id="save-workload" class="btn"><i class="icon-download"></i> Save Workload</a>
                     <a href="#" id="load-workload" class="btn" style="position:relative"><i class="icon-upload"></i> Load Workload<input type="file" id="load-workload-input" onchange="handleUpload(this.files)"></input></a>
-                    {% endif %}
+		    {{ end }}
 
                     <form id="settings-form" class="form-horizontal well" style="position:absolute;display:none;">
                         <fieldset>
                             <div class="control-group">
                                 <label class="control-label" for="memsql_host">MemSQL Host:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="memsql_host"  value="{{settings.memsql_host}}" placeholder="host">
+                                    <input type="text" class="input-medium" id="memsql_host"  value="{{.Host}}" placeholder="host">
                                 </div>
                                 <label class="control-label" for="memsql_port">Port:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="memsql_port"  value="{{settings.memsql_port}}" placeholder="port">
+                                    <input type="text" class="input-medium" id="memsql_port"  value="{{.Port}}" placeholder="port">
                                 </div>
                                 <label class="control-label" for="memsql_user">User:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="memsql_user"  value="{{settings.memsql_user}}" placeholder="user">
+                                    <input type="text" class="input-medium" id="memsql_user"  value="{{.User}}" placeholder="user">
                                 </div>
                                 <label class="control-label" for="memsql_pass">Password:</label>
                                 <div class="controls" style="">
-                                    <input type="password" class="input-medium" id="memsql_pass" value="{{settings.memsql_pass}}" placeholder="password">
+                                    <input type="password" class="input-medium" id="memsql_pass" value="{{.Pass}}" placeholder="password">
                                 </div>
                             </div>
                             <div class="control-group">
                                 <label class="control-label" for="memsql_db" rel="tooltip" title="Database Name for Query Context">MemSQL Database:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="memsql_db" style="" value="{{settings.memsql_db}}" placeholder="database name">
+                                    <input type="text" class="input-medium" id="memsql_db" style="" value="{{.DB}}" placeholder="database name">
                                 </div>
                             </div>
                             <div class="control-group">
@@ -96,14 +100,14 @@
                                 </div>
                             </div>
 
-                            {% if not live %}
+                            {{ if not .Live }}
                             <div class="control-group">
                                 <label class="control-label" for="workers" rel="tooltip" title="The number of worker processes that drive the queries">Worker Processes:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="workers" style="" value="{{settings.workers}}" placeholder="workers">
+                                    <input type="text" class="input-medium" id="workers" style="" value="{{.Workers}}" placeholder="workers">
                                 </div>
                             </div>
-                            {% endif %}
+                            {{ end }}
                         </fieldset>
                         <div style="text-align:right; width:100%;">
                             <span id="settings-form-close" class="btn">Save</span>
@@ -117,12 +121,12 @@
                     <div class="row-fluid" style="margin-top:30px;height:80px;">
                         <div class="span5"></div>
                         <div class="span2">
-                            {% if live %}
+                            {{ if .Live }}
                             <div><h1>Live Mode</h1></div>
-                            {% else %}
+                            {{ else }}
                             <p class="play-button"><a class="btn btn-large"> PLAY </a> </p>
                             <p class="clear-button"><a class="btn btn-large" id="clear-button"> CLEAR </a> </p>
-                            {% endif %}
+                            {{ end }}
                         </div>
                         <div class="span5" style="z-index:30;position:relative;pointer-events:none">
                             <div id="notifications" style="position:absolute; width:100%;top:0;left:0">
@@ -144,27 +148,27 @@
             </div>
 
             <!-- TODO tabs don't work with charts b/c of display:none when hidden; instead edit css to position:-1000px -->
-            {% if liveNOTWORKING %}
+            {{ if .LiveNOTWORKING }}
             <ul class="nav nav-tabs">
                 <li class="active"><a href="#dials" data-toggle="tab">Dials</a></li>
                 <li><a href="#metrics" data-toggle="tab">Metrics</a></li>
             </ul>
-            {% endif %}
+            {{ end }}
 
            <div class="row-fluid content-container">
                 <div class="tab-content">
                     <div class="tab-pane active" id="dials">
                         <div class="span8">
-                            {% if live %}
+                            {{ if .Live }}
                             <p><a class="btn" href="#" id="resort-queries">Sort Queries</a></p>
-                            {% else %}
+                            {{ else }}
                             <p>Instructions: Enter SQL queries in the boxes below. To generate random input, use <b>@</b> for numbers and <b>^</b> for strings (no quotation marks necessary). Adjust the dial to set the number of queries per second sent to the server.</p>
-                            {% endif %}
+                            {{ end }}
                             <div class="widget-container">
                                 <div class="" style="display:none" id="empty_widget">
-                                    {% if not live %}
+                                    {{ if not .Live }}
                                     <a class="close-widget" href="#"><i class="icon-remove"></i></a>
-                                    {% endif %}
+                                    {{ end }}
                                     <div class="left-piece" style="">
                                         <div class="dial-container"> </div>
                                     </div>
@@ -182,19 +186,19 @@
                         </div>
                         <div class="span4 graph-container">
                             <div id="qps-graph"></div>
-                            {% if live %}
+                            {{ if .Live }}
                             <div class="mets-container">
                                 <div id="mets-graph"></div>
                             </div>
-                            {% endif %}
+                            {{ end }}
                         </div>
                     </div>    <!-- tab one -->
 
-                    {% if liveNOTWORKING %}
+                    {{ if .LiveNOTWORKING }}
                     <div class="tab-pane" id="metrics">
                             <div id="mets-graph"></div>
                     </div>    <!-- tab two -->
-                    {% endif %}
+                    {{ end }}
                 </div>    <!-- tabs contents -->
             </div>    <!-- row fluid container -->
 
@@ -230,9 +234,9 @@
         <div style="display:none">
             <input type="text" class="dial" id="base-dial" 
             data-min="0" data-max="" value="0" fgColor="000000" 
-            {% if not live %}
+            {{ if not .Live }}
             data-displayPrevious=true 
-            {% endif %}
+            {{ end }}
             />
         </div>
 

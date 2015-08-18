@@ -67,17 +67,17 @@ func New(config *AppConfig) (*App, error) {
 		reportDir: config.ReportDir,
 		viewsDir:  config.ViewsDir,
 		public:    config.PublicDir,
-
 		templates: make(map[string]*template.Template),
 	}
 
 	// Register handlers with ServeMux.
 	r := http.NewServeMux()
 	log.Printf("app.public %s", app.public)
+
 	// Static assets
 	serveStatic := func(name string) {
 		fs := http.FileServer(http.Dir(filepath.Join(app.public, name)))
-		prefix := "/" + name + "/"
+		prefix := "/static/" + name + "/"
 		r.Handle(prefix, http.StripPrefix(prefix, fs))
 	}
 
@@ -115,7 +115,7 @@ func (app *App) compileTemplates(viewsDir string) error {
 		templatePath := filepath.Join(viewsDir, info.Name())
 		t, err := template.New("").ParseFiles(templatePath)
 		if err != nil {
-			return fmt.Errorf("%v", err)
+			return fmt.Errorf("error parsing template %s: %v", info.Name(), err)
 		}
 		app.templates[info.Name()] = t
 	}
@@ -137,5 +137,4 @@ func (app *App) Render(name string, w http.ResponseWriter, r *http.Request, data
 	if err := t.ExecuteTemplate(w, templateName, data); err != nil {
 		log.Printf("error rendering template %s: %v", templateName, err)
 	}
-
 }

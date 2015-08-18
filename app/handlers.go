@@ -11,7 +11,26 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	w.Write([]byte("I'm up"))
+	s := struct {
+		memsql_host string
+		memsql_port string
+		memsql_user string
+		memsql_pass string
+		memsql_db   string
+		workers     string
+	}{"memhost", "6000", "bob", "foo", "mydb", "100"}
+	data := map[string]interface{}{
+		"Live":       false,
+		"Redirected": false,
+		"MaxDial":    50,
+		"Host":       "sandbox.yhathq.com",
+		"Port":       7077,
+		"User":       "ec2",
+		"Pass":       "",
+		"DB":         "",
+		"Settings":   s,
+	}
+	app.Render("index", w, r, data)
 }
 
 // handleWorkload sends workload to worker goroutines.
