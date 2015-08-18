@@ -1,10 +1,10 @@
-[MemSQL Workload Simulator](http://developers.memsql.com/)
+[ScienceOps Workload Simulator](https://www.yhathq.com/products/scienceops)
 ====================
 
-The MemSQL Workload Simulator lets you simulate running thousands of queries per second against the database with a custom workload. It also supports
-live mode, which lets you monitor the performance of a running MemSQL instance.
+The ScienceOps Workload Simulator lets you simulate running thousands of api queries per second and collects load testing data. It also supports
+live mode, which lets you monitor the performance of a running ScienceOps instance.
 
-This project is under active, continuous development. Expect updates to come frequently as the feature set is built out. If you have suggestions for features, feel free to post them to the issues section of this repository or
+Expect updates to come frequently as the feature set is built out. If you have suggestions for features, feel free to post them to the issues section of this repository or
 implement them and submit them as a pull request. If you build an interesting workload, we would love to include it in the workloads directory.
 
 
