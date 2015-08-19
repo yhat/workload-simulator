@@ -40,7 +40,7 @@ type App struct {
 	viewsDir  string
 	public    string
 
-	// Go templates
+	// Go template map
 	templates map[string]*template.Template
 
 	// http router
