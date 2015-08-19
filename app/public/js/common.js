@@ -443,21 +443,12 @@ Welcome to {0}! you can use this \
 console to run commands against the database.\n\n";
 
 function onWhatSqlSuccess(data, textStatus, jqXHR) {
-    if (data['error']) {
-        createError(data['error']);
-        onWhatSqlFailure();
-    } else {
-        oldWhatSql = whatSql;
-        if (data.output.indexOf('MemSQL') != -1) {
-            whatSql = 'MemSQL';
-        } else {
-            whatSql = 'MySQL';
-        }
-        if (!jqconsole) {
-            continueInitConsole();
-        } else if (whatSql != oldWhatSql) {
-            resetConsole();
-        }
+    oldWhatSql = whatSql;
+    whatSql = 'NoSQL';
+    if (!jqconsole) {
+	continueInitConsole();
+    } else if (whatSql != oldWhatSql) {
+        resetConsole();
     }
 }
 

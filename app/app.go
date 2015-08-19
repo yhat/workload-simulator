@@ -5,8 +5,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/gorilla/handlers"
 )
 
 // OpsConfig is a type used to define the target Ops
@@ -37,6 +40,7 @@ type App struct {
 	viewsDir  string
 	public    string
 
+	// Go templates
 	templates map[string]*template.Template
 
 	// http router
@@ -72,7 +76,6 @@ func New(config *AppConfig) (*App, error) {
 
 	// Register handlers with ServeMux.
 	r := http.NewServeMux()
-	log.Printf("app.public %s", app.public)
 
 	// Static assets
 	serveStatic := func(name string) {
@@ -87,7 +90,6 @@ func New(config *AppConfig) (*App, error) {
 	serveStatic(`lang`)
 
 	r.HandleFunc("/", app.handleRoot)
-	r.HandleFunc("/helloWorld", app.handleHelloWorld)
 	r.HandleFunc("/workload", app.handleWorkload)
 	r.HandleFunc("/ping", app.handlePing)
 	r.HandleFunc("/unload", app.handleUnload)
@@ -96,11 +98,13 @@ func New(config *AppConfig) (*App, error) {
 	r.HandleFunc("/status", app.handleStatus)
 	r.HandleFunc("/live", app.handleLive)
 	r.HandleFunc("/live/stats", app.handleLiveStats)
+	r.HandleFunc("/sql", app.handleSql)
 	r.HandleFunc("/save", app.handleSave)
 	r.HandleFunc("/kill", app.handleKill)
 
 	// Add router to app.
-	app.router = r
+	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
+	app.router = loggedRouter
 
 	return &app, nil
 }
