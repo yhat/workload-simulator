@@ -28,6 +28,7 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 		"User":       "ec2",
 		"Pass":       "",
 		"DB":         "",
+		"Workers":    50,
 		"Settings":   s,
 	}
 	app.Render("index", w, r, data)
