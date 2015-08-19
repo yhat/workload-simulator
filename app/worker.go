@@ -9,11 +9,11 @@ import (
 )
 
 type Settings struct {
-	opsHost    string
-	apiKey     string
-	user       string
-	maxDialVal int
-	workers    int
+	OpsHost    string `json:"ops_host"`
+	ApiKey     string `json:"ops_apikey"`
+	User       string `json:"ops_user"`
+	MaxDialVal int    `json:"dial_max_value"`
+	Workers    string `json:"workers"`
 }
 
 type ModelInput struct {
@@ -21,7 +21,7 @@ type ModelInput struct {
 	name string
 
 	// input data
-	input map[string]string
+	input map[string]interface{}
 
 	// queries per second
 	qps int
