@@ -66,21 +66,21 @@
                     <form id="settings-form" class="form-horizontal well" style="position:absolute;display:none;">
                         <fieldset>
                             <div class="control-group">
-                                <label class="control-label" for="memsql_host">Ops Host:</label>
+                                <label class="control-label" for="ops_host">Ops Host:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="memsql_host"  value="{{.Host}}" placeholder="https://sandbox.yhathq.com">
+                                    <input type="text" class="input-medium" id="ops_host"  value="{{.Host}}" placeholder="https://sandbox.yhathq.com">
                                 </div>
-                                <label class="control-label" for="memsql_port">API Key:</label>
+                                <label class="control-label" for="ops_apikey">API Key:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="memsql_port"  value="{{.Port}}" placeholder="API Key">
+                                    <input type="text" class="input-medium" id="ops_apikey"  value="{{.ApiKey}}" placeholder="API Key">
                                 </div>
-                                <label class="control-label" for="memsql_user">User:</label>
+                                <label class="control-label" for="ops_user">User:</label>
                                 <div class="controls" style="">
-                                    <input type="text" class="input-medium" id="memsql_user"  value="{{.User}}" placeholder="User">
+                                    <input type="text" class="input-medium" id="ops_user"  value="{{.User}}" placeholder="User">
                                 </div>
                             </div>
                             <div class="control-group">
-                                <label class="control-label" for="memsql_qps-number" rel="tooltip" title="Maximum Value on Each Query Dial">Maximum Dial Value:</label>
+                                <label class="control-label" for="ops_qps-number" rel="tooltip" title="Maximum Value on Each Query Dial">Maximum Dial Value:</label>
                                 <div class="controls" style="">
                                     <span style="line-height: 20px;">
                                         <input type="text" readonly="readonly" class="input-small" id="qps-number" style="background-color:white;"></input>
