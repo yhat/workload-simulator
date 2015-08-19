@@ -1,0 +1,14 @@
+{
+	"ImportPath": "github.com/yhat/workload-simulator",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/handlers",
+			"Rev": "4ef72b2795a418935d497c8db213080be06f8850"
+		},
+		{
+			"ImportPath": "github.com/yhat/yhat-go/yhat",
+			"Rev": "5997d2fa173aff026efbbb45ec4d4e14faa109a8"
+		}
+	]
+}
