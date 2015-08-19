@@ -38,7 +38,7 @@ var chartConfig =  {
            },
     yAxis: {
                title: {
-                          text: 'Queries Per Second'
+                          text: 'Requests Per Second'
                       },
                plotLines: [{
                               value: 0,
