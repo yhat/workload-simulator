@@ -51,6 +51,8 @@ type App struct {
 
 	// Worker configuration.
 	workerProcs int
+	kill        chan int
+	report      chan string
 }
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {

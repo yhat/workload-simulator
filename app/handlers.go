@@ -97,31 +97,41 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			workload: wrk,
 			settings: settings,
 		}
-		wk := &Work{modelId: "0", workload: &workld, reqTotal: 100000}
+		wk0 := &Work{modelId: "0", workload: &workld, reqTotal: 100000}
+		wk1 := &Work{modelId: "1", workload: &workld, reqTotal: 100000}
 
 		kill := make(chan int)
 		report := make(chan string)
 		stats := StatsMonitor(report, kill, 100*time.Millisecond)
+		app.kill = kill
+		app.report = report
 
 		for i := 0; i < 1; i++ {
-			Worker(stats, kill, time.Second, wk)
+			Worker(stats, kill, time.Second, wk0)
+			Worker(stats, kill, time.Second, wk1)
 		}
 
-		for i := 0; i < 10000; i++ {
-			select {
-			case r := <-report:
-				fmt.Printf("report = %s\n", r)
-			}
-
-		}
-		// kill workers
-		kill <- 0
-		kill <- 0
 	default:
 		http.Error(w, "I only respond to POSTs.", http.StatusNotImplemented)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	data := make(map[string]interface{})
+	b, err := formatJSONresp(true, data)
+	if err != nil {
+		http.Error(w, "failed to marshal data", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
+}
+
+func formatJSONresp(running bool, data map[string]interface{}) ([]byte, error) {
+	data["running"] = running
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 // handlePing returns ok or Timeout.
@@ -136,12 +146,39 @@ func (app *App) handleUnload(w http.ResponseWriter, r *http.Request) {
 
 // handlePause pauses the worker goroutines.
 func (app *App) handlePause(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+
 }
 
 // handleStats asks worker goroutines to report stats to the app
 func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
+	data := make(map[string]interface{})
+	stats := make(map[string]int)
+	select {
+	case statReport := <-app.report:
+		var report map[string]int
+		err := json.Unmarshal([]byte(statReport), &report)
+		if err != nil {
+			http.Error(w, "Stats error", http.StatusInternalServerError)
+			return
+		}
+		data["running"] = true
+		for k, v := range report {
+			stats[k] = int(v)
+		}
+		data["stats"] = stats
+		fmt.Printf("data = %v", data)
+
+	case <-time.After(time.Second):
+		data["running"] = false
+	}
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, "failed to marshal data", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
+	w.Write(b)
 }
 
 // handleStatus asks worker goroutines to give their status
