@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/yhat/yhat-go/yhat"
 )
 
 // handleRoot renders the home page or redirects if ping timeout is
@@ -94,20 +92,15 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		yh, err := yhat.New(settings.User, settings.ApiKey, settings.OpsHost)
-		if err != nil {
-			http.Error(w, "connection to Ops server failed", http.StatusInternalServerError)
-		}
-
-		fmt.Print("connected to yhat")
 		workld := Workload{
-			workload:   wrk,
-			settings:   settings,
-			yhatClient: yh,
+			workload: wrk,
+			settings: settings,
 		}
 		for i := 0; i < 100; i++ {
-			fmt.Printf("prediction\n")
-			workld.Predict()
+			err := workld.Predict()
+			if err != nil {
+				http.Error(w, "Bad prediction", http.StatusBadRequest)
+			}
 		}
 	default:
 		http.Error(w, "I only respond to POSTs.", http.StatusNotImplemented)
