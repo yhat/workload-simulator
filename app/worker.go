@@ -82,44 +82,43 @@ func opsPredictHTTP(username, model, apikey, host string, input interface{}) (*h
 	if err != nil {
 		return nil, fmt.Errorf("ops prediction request failed: %v", err)
 	}
+	defer resp.Body.Close()
 	return resp, nil
 }
 
 type Work struct {
 	modelId  string
 	workload *Workload
+	reqTotal int
 }
 
 // Worker func that spawns a goroutine that does work and emits statistics to a stats channel
-// every period duration.
-func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration) chan<- *Work {
-	work := make(chan *Work)
+// every period duratio1vn.
+func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Work) {
 	ticker := time.NewTicker(dt)
 	predCount := 0
-
 	go func() {
-		// block until work is sent.
-		w := <-work
-		for {
+		for i := 0; i < w.reqTotal; i++ {
 			select {
 			case <-ticker.C:
 				// send stats and reset request counter
 				stats <- &Stat{w.modelId, predCount, int(dt)}
 				predCount = 0
 			case <-kill:
+				fmt.Printf("im dying!!!")
 				return
 			default:
 				// Do work and increment counter
 				err := w.workload.Predict()
 				if err != nil {
-					fmt.Printf("worker modelId %s error", w.modelId)
+					fmt.Printf("Prediction error: %v\n", err)
 					return
 				}
 				predCount += 1
 			}
 		}
 	}()
-	return work
+	return
 }
 
 // Stat represents request statistics
@@ -132,6 +131,7 @@ type Stat struct {
 func StatsMonitor(report chan<- string, kill <-chan int, dt time.Duration) chan<- *Stat {
 	stats := make(chan *Stat)
 	requestStats := make(map[string]int)
+
 	ticker := time.NewTicker(dt)
 	go func() {
 		for {
@@ -146,21 +146,12 @@ func StatsMonitor(report chan<- string, kill <-chan int, dt time.Duration) chan<
 				b := bytes.NewBuffer(r)
 				report <- b.String()
 			case s := <-stats:
-				// reqs is requests per second. If statement here protects
-				// for the case that dt is gt 1.
-				idt := int(dt)
-				var reqs int
-				if dt <= 1 {
-					reqs = s.nreq * idt
-				} else {
-					reqs = s.nreq / idt
-				}
-				requestStats[s.modelId] += reqs
+				idt := dt.Seconds()
+				reqs := float64(s.nreq) / idt
+				requestStats[s.modelId] = int(reqs)
 			case <-kill:
 				fmt.Println("[StatsMonitor] got KILLSIG exiting.")
 				return
-			default:
-				// do nothing
 			}
 
 		}

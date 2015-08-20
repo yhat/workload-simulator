@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // handleRoot renders the home page or redirects if ping timeout is
@@ -96,12 +97,26 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			workload: wrk,
 			settings: settings,
 		}
-		for i := 0; i < 100; i++ {
-			err := workld.Predict()
-			if err != nil {
-				http.Error(w, "Bad prediction", http.StatusBadRequest)
-			}
+		wk := &Work{modelId: "0", workload: &workld, reqTotal: 100000}
+
+		kill := make(chan int)
+		report := make(chan string)
+		stats := StatsMonitor(report, kill, 100*time.Millisecond)
+
+		for i := 0; i < 1; i++ {
+			Worker(stats, kill, time.Second, wk)
 		}
+
+		for i := 0; i < 10000; i++ {
+			select {
+			case r := <-report:
+				fmt.Printf("report = %s\n", r)
+			}
+
+		}
+		// kill workers
+		kill <- 0
+		kill <- 0
 	default:
 		http.Error(w, "I only respond to POSTs.", http.StatusNotImplemented)
 	}
