@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -17,6 +16,7 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	// TODO move to config
 	s := struct {
 		memsql_host string
 		memsql_port string
@@ -40,6 +40,16 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 	app.Render("index", w, r, data)
 }
 
+type modelData struct {
+	Query string
+	QPS   int
+}
+
+type queryData struct {
+	Model string
+	Input map[string]interface{}
+}
+
 // handleWorkload sends workload to worker goroutines.
 func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -48,7 +58,7 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 		wl := r.FormValue("workload")
 		s := r.FormValue("settings")
 
-		var work map[string]interface{}
+		work := make(map[string]modelData)
 		err := json.Unmarshal([]byte(wl), &work)
 		if err != nil {
 			fmt.Printf("error parsing workload form: %v\n", err)
@@ -62,32 +72,22 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 
 		// Some nasty type conversion to parse a nested json. This builds
 		// a map that maps a window to a model input for Ops.
-		var wrk map[string]*ModelInput
-		wrk = make(map[string]*ModelInput)
+		wrk := make(map[string]*ModelInput)
 		for k, v := range work {
-			vv := v.(map[string]interface{})
-
-			qps := vv["qps"]
-			iqps, err := strconv.Atoi(qps.(string))
-			if err != nil {
-				http.Error(w, "error parsing model inputs", http.StatusInternalServerError)
-			}
-
-			query := vv["query"]
-			var mm map[string]interface{}
-			err = json.Unmarshal([]byte(query.(string)), &mm)
+			q := queryData{}
+			err = json.Unmarshal([]byte(v.Query), &q)
 			if err != nil {
 				fmt.Printf("error parsing workload form: %v\n", err)
 			}
 
-			modelName := mm["model"]
-			input := mm["input"]
+			modelName := q.Model
+			input := q.Input
 
 			// create model input for each window.
 			modelInput := &ModelInput{
-				name:  modelName.(string),
-				input: input.(map[string]interface{}),
-				qps:   iqps,
+				name:  modelName,
+				input: input,
+				qps:   v.QPS,
 			}
 			wrk[k] = modelInput
 
