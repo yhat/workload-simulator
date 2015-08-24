@@ -7,8 +7,8 @@
 			"Rev": "4ef72b2795a418935d497c8db213080be06f8850"
 		},
 		{
-			"ImportPath": "github.com/yhat/yhat-go/yhat",
-			"Rev": "5997d2fa173aff026efbbb45ec4d4e14faa109a8"
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "7ad95dd0798a40da1ccdff6dff35fd177b5edf40"
 		}
 	]
 }
