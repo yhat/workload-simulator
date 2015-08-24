@@ -14,7 +14,7 @@ import (
 
 // Configuration for web app.
 type AppConfig struct {
-	// web stuff
+	// Web stuff
 	Host      string
 	Port      int
 	PublicDir string
@@ -25,13 +25,13 @@ type AppConfig struct {
 	MaxDial    int
 	MaxWorkers int
 
-	// used to define the target Ops server.
+	// Config to define the target Ops server.
 	OpsHost   string
 	OpsApiKey string
 	OpsUser   string
 }
 
-// App defines the app and configs
+// App defines the app and configs, router, template map and communication channels.
 type App struct {
 	// Configuration for web app.
 	config *AppConfig

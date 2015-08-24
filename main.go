@@ -34,18 +34,22 @@ func main() {
 	// Init communication channels for StatsMonitor and Workers
 	killc := make(chan int)
 	reportc := make(chan string)
+	defer close(killc)
+	defer close(reportc)
 
 	a.Killc = killc
 	a.Reportc = reportc
 
-	// init statsMonitor. Todo: Move this into app constructor.
+	// Start a StatMonitor goroutine that maintains a map of models
+	// to stats.
+	fmt.Println("starting stats mointor")
 	stats := app.StatsMonitor(reportc, killc, 100*time.Millisecond)
 	a.Statc = stats
 
+	log.Printf("serving http on port: %d\n", cfg.Web.HttpPort)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Web.HttpPort), a)
 	if err != nil {
 		log.Println(err)
 	}
 
-	log.Printf("serving http on port: %d\n", cfg.Web.HttpPort)
 }
