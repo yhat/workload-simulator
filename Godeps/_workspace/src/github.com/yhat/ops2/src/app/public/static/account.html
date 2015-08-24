@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ScienceOps</title>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans' rel='stylesheet prefetch' type='text/css'>
+    <link rel="stylesheet" href="/css/styles.css"/>
+    <link rel="stylesheet" href="/css/highlight.styles/github.css"/>
+    <script src="/js/lib/react-0.13.3.js"></script>
+    <script src="/js/lib/jquery-2.1.3.min.js"></script>
+    <script src="/js/lib/bootstrap.min.js"></script>
+    <script src="/js/lib/bootstrap-switch.js"></script>
+    <script type="text/javascript" src="/js/common.js"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- sidebar -->
+        <div class="col-sm-3 col-md-2 sidebar">
+          <div id="side-nav"></div>
+        </div>
+
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <div id="error-modal"></div>
+    <script type="text/javascript">
+var parts = window.location.pathname.split("/");
+var baseURL = "models";
+if (baseURL.length > 1) {
+    baseURL = parts[1];
+}
+
+var routes = {
+    "models": "overview",
+    "account": "account",
+    "admin": "admin"
+}
+var page = routes[baseURL] || "overview";
+React.render(
+    React.createElement(SideNav, {page: page}), 
+    document.getElementById('side-nav')
+);
+var errorModal = React.render(
+    React.createElement(ErrorModal, {}), 
+    document.getElementById('error-modal')
+);
+var showError = function(title, error) {
+    errorModal.show(title, error);
+};
+    </script>
+        <div class="row">
+  <p class="lead text-center">Account</p>
+  <div class="text-center" id="username"></div>
+  <hr>
+</div>
+<div class="row">
+  <div class="col-sm-3">
+    <var class="lead small text-primary">API Key</var>
+    <p class="small text-muted">Your API Key is used to authenticate requests to your model.</p>
+  </div>
+  <div class="col-sm-9">
+    <span id="api-key"></span>
+    <span id="api-key-regenerate"></span>
+  </div>
+</div>
+<hr>
+<div class="row">
+  <div class="col-sm-3">
+    <var class="lead small text-primary">Read Only API Key</var>
+    <p class="small text-muted">Your Read Only API Key is used for applications that call your model. This API Key <strong>cannot</strong> be used to deploy new models.</p>
+  </div>
+  <div class="col-sm-9">
+    <span id="read-only-key"></span>
+    <span id="read-only-key-regenerate"></span>
+  </div>
+</div>
+<script type="text/javascript" src="/js/account.js"></script>
+        </div>
+
+      </div>
+    </div>
+  </body>
+</html>

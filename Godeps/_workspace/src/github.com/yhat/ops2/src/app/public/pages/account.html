@@ -1,0 +1,27 @@
+<div class="row">
+  <p class="lead text-center">Account</p>
+  <div class="text-center" id="username"></div>
+  <hr>
+</div>
+<div class="row">
+  <div class="col-sm-3">
+    <var class="lead small text-primary">API Key</var>
+    <p class="small text-muted">Your API Key is used to authenticate requests to your model.</p>
+  </div>
+  <div class="col-sm-9">
+    <span id="api-key"></span>
+    <span id="api-key-regenerate"></span>
+  </div>
+</div>
+<hr>
+<div class="row">
+  <div class="col-sm-3">
+    <var class="lead small text-primary">Read Only API Key</var>
+    <p class="small text-muted">Your Read Only API Key is used for applications that call your model. This API Key <strong>cannot</strong> be used to deploy new models.</p>
+  </div>
+  <div class="col-sm-9">
+    <span id="read-only-key"></span>
+    <span id="read-only-key-regenerate"></span>
+  </div>
+</div>
+<script type="text/javascript" src="/js/account.js"></script>

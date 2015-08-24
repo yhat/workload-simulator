@@ -1,0 +1,34 @@
+DELIMITER //
+
+USE scienceops//
+
+-- Set up users
+INSERT INTO User(username, password, email) VALUES ('eric', 'blah', 'ec2@yhathq.com')//
+INSERT INTO User(username, password, email) VALUES ('donny', 'blah', 'donny@yhathq.com')//
+
+-- Give users api keys
+INSERT INTO ApiKey(user_id, apikey, read_only_apikey) VALUES (1, 'abc123', 'def1234')//
+INSERT INTO ApiKey(user_id, apikey, read_only_apikey) VALUES (2, 'cde123', 'fgh1234')//
+
+-- Create models and versions
+INSERT INTO Model(modelname, user_id, lang) VALUES ('HelloWorld', 1, 'python')//
+INSERT INTO Model(modelname, user_id, lang) VALUES ('AddOne', 1, 'python')//
+INSERT INTO ModelVersion(model_id, version, code) VALUES(1, 1, 'print "Hello World"')//
+INSERT INTO ModelVersion(model_id, version, code) VALUES(2, 1, 'x = 1; y = x + 1')//
+
+-- Simulate Model Status
+INSERT INTO ModelStatus(model_id, status) VALUES(1, 'online')//
+INSERT INTO ModelStatus(model_id, status) VALUES(2, 'failed')//
+
+-- Create some MPS servers
+INSERT INTO MpsServer(hostname) VALUES('123.0.0.0')//
+INSERT INTO MpsServer(hostname) VALUES('123.0.0.1')//
+
+-- Simulate model instances running on an MPS server
+INSERT INTO MpsModelInstance(model_id, version, mps_id) VALUES (1, 1, 1)//
+INSERT INTO MpsModelInstance(model_id, version, mps_id) VALUES (1, 1, 2)//
+
+-- Sharing is caring
+INSERT INTO ModelSharedUser(model_id, shared_user_id) VALUES(2, 2)//
+
+

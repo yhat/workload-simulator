@@ -1,0 +1,9 @@
+# THIS FILE WAS GENERATED, DO NOT EDIT
+FROM continuumio/anaconda:latest
+
+run pip install yhat==1.3.6
+
+copy svc.py /root/svc.py
+workdir /root
+
+cmd ["python", "svc.py"]

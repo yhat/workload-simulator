@@ -1,0 +1,16 @@
+# THIS FILE WAS GENERATED, DO NOT EDIT
+FROM continuumio/anaconda:latest
+
+run conda install pandas==0.16.1
+
+
+run apt-get install -y wget unzip
+run wget https://github.com/yhat/yhat-client/archive/master.zip
+run unzip master.zip
+run pip install -e yhat-client-master
+
+
+copy model.py /root/model.py
+workdir /root
+
+cmd ["python", "model.py"]

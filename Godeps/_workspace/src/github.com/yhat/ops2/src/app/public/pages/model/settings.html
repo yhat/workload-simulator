@@ -1,0 +1,70 @@
+<!-- main section -->
+<div class="row">
+  <div id="model-header"></div>
+</div>
+<hr>
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2">
+    <div id="model-nav"></div>
+  </div>
+</div>
+<hr>
+<!-- settings -->
+<div class="row">
+  <div class="col-sm-8">
+    <p class="text-uppercase text-orange">Model Actions</p>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-10">
+    <var class="lead small text-primary">Restart</var>
+    <p class="small text-muted">Stop and restart this model. This will render your model unreachable for a moment.</p>
+  </div>
+  <div class="col-sm-2">
+    <span id="action-restart"></span>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-10">
+    <var class="lead small text-primary">Sleep</var>
+    <p class="small text-muted">Sleeping a model will remove a model from active memory. Use this to save RAM when you have many models on a single server.</p>
+  </div>
+  <div class="col-sm-2">
+    <span id="action-sleep"></span>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-10">
+    <var class="lead small text-primary">Wake</var>
+    <p class="small text-muted">Bring this model out of sleep mode in order to make predictions.</p>
+  </div>
+  <div class="col-sm-2">
+    <span id="action-wake"></span>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-10">
+    <var class="lead small text-primary">Delete</var>
+    <p class="small text-muted">Fully delete this model from the ScienceOps system. <strong><span class="text-danger">Warning: deletion is not reversible.</span></strong></p>
+  </div>
+  <div class="col-sm-2">
+    <span id="action-delete"></span>
+  </div>
+</div>
+<hr>
+<div class="row">
+  <div class="col-sm-8">
+    <p class="text-uppercase text-orange">Shared Users</p>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-7">
+    <var class="lead small text-primary">Manage Collaborators</var>
+    <p class="small text-muted">Allow other users to view and call your model via the ScienceOps API.</p>
+  </div>
+  <div id="shared-users" class="col-sm-5"></div>
+</div>
+<hr>
+<!-- end settings -->
+<script type="text/javascript" src="/js/settings.js"></script>
+<!-- end section -->

@@ -1,0 +1,21 @@
+from continuumio/anaconda:latest
+
+run apt-get install -y unzip wget
+
+env PATH /root/anaconda/bin:$PATH
+
+run conda config --add channels http://yhat-conda-channel.s3-website-us-east-1.amazonaws.com
+
+run conda install -y pandas==0.16.1
+run conda install -y numpy
+
+copy deploy.py /root/deploy.py
+copy pricing.py /root/pricing.py
+copy prediction_base.py /root/prediction_base.py
+copy price_df.pkl /root/price_df.pkl
+
+{{ INSTALL YHAT }}
+
+workdir /root
+
+cmd ["python", "deploy.py"]

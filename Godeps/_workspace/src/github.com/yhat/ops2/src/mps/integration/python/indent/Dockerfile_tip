@@ -1,0 +1,14 @@
+# THIS FILE WAS GENERATED, DO NOT EDIT
+FROM continuumio/anaconda:latest
+
+
+run apt-get install -y wget unzip
+run wget https://github.com/yhat/yhat-client/archive/master.zip
+run unzip master.zip
+run pip install -e yhat-client-master
+
+
+copy indent.py /root/indent.py
+workdir /root
+
+cmd ["python", "indent.py"]

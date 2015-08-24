@@ -1,0 +1,223 @@
+<p class="lead text-center">Admin</p>
+
+<hr>
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2">
+    <div id="admin-nav"></div>
+  </div>
+</div>
+<hr>
+
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2">
+    <h4>Your Team <span class="pull-right">add a new user&nbsp;<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#newUserModal"><span class="fa fa-plus"></span></button></span></h4>
+    <div id="users-table"></div>
+  </div>
+</div>
+<div id="user-create"></div>
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="userLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="userLabel">User Profile</h4>
+      </div>
+      <div class="modal-body">
+        <!-- start user-data -->
+        <div class="row">
+          <div class="col-sm-4">
+            <var class="lead small text-primary pull-right">Username</var>
+            <!-- <p class="small text-muted">Username cannot be reset.</p> -->
+          </div>
+          <div class="col-sm-8">
+            <p id="username" class="small text-muted">Bob</p>
+          </div>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-sm-4">
+            <var class="lead small text-primary pull-right">API Key</var>
+            <!-- <p class="small text-muted">User's API Key is used to authenticate requests to your model.</p> -->
+          </div>
+          <div class="col-sm-8">
+            <p id="apikey" class="small text-muted"><code>60d5583727e0b5413c520cfe065409a0</code></p>
+          </div>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-sm-4">
+            <var class="lead small text-primary pull-right">Admin</var>
+            <!-- <p class="small text-muted">User's API Key is used to authenticate requests to your model.</p> -->
+          </div>
+          <div class="col-sm-8">
+            <input id="admin-checkbox" type="checkbox" name="admin-checkbox" checked>
+          </div>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-sm-4">
+            <var class="lead small text-primary pull-right">Reset Password</var>
+            <!-- <p class="small text-muted">User's API Key is used to authenticate requests to your model.</p> -->
+          </div>
+          <div class="col-sm-6">
+            <div>
+              <div class="form-group">
+                <!-- <label for="pass">New Password</label> -->
+                <input id="password1" ref="password" type="password" name="password" class="form-control input-sm" placeholder="New Password" required/>
+              </div>
+              <div class="form-group">
+                <!-- <label for="pass">Confirm Password</label> -->
+                <input id="password2" ref="password" type="password" name="password" class="form-control input-sm" placeholder="Confirm New Password" required/>
+              </div>
+              <button id="change-password" class="btn btn-default btn-xs">Change Password</button>
+            </div>
+          </div>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-sm-4">
+            <var class="lead small text-primary pull-right">Delete User</var>
+          </div>
+          <div class="col-sm-6">
+            <p class="small text-muted">Fully delete this user from the ScienceOps system.</p>
+            <p class="small text-muted"><strong><span class="text-danger">Warning: deletion is not reversible.</span></strong></p>
+            <button id="delete" class="btn btn-danger btn-xs btn-block">Delete</button>
+          </div>
+        </div>
+        <!-- end user-data -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="newUserModal" tabindex="-1" role="dialog" aria-labelledby="newUserLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="userLabel">Create a New User</h4>
+      </div>
+      <div class="modal-body">
+        <form id="create-user" class="form">
+          <div class="form-group">
+            <label for="user">User</label>
+            <input ref="username" type="text" name="username" class="form-control" 
+                id="new-user" placeholder="Username" required/>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input ref="email" type="email" name="email" class="form-control"
+                id="new-email" placeholder="Email" required/>
+          </div>
+          <div class="form-group">
+            <label for="pass">Password</label>
+            <input ref="password" type="password" name="password" class="form-control" 
+                id="new-password" placeholder="Password" required/>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input id="new-is-admin" ref="admin" type="checkbox" /> Admin
+            </label>
+          </div>
+          <button type="submit" class="btn btn-default">Create User</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="/js/admin-users-2.js"></script>
+<script type="text/javascript">
+  $("#admin-checkbox").bootstrapSwitch({
+    size: "mini",
+    onText: "Yes",
+    offText: "No"
+  });
+  $("#change-password").click(function(e) {
+    var pwd1 = $("#password1").val();
+    var pwd2 = $("#password2").val();
+    var username = $("#username").text();
+    if (pwd1!=pwd2) {
+      // BOO!
+    } else {
+      var data = { "username": username, "password": pwd1 };
+      $.ajax({
+          method: "POST",
+          url: "/admin/users/setpass",
+          data: $.param(data),
+          cache: false,
+          success: function(data) {
+            $("#change-password").after("<p id='success-check' style='color: green;'>Password updated! <span class='fa fa-check' style='color: green;'></span></p>");
+            setTimeout(function() {
+              $("#success-check").remove();
+            }, 1000);
+          }.bind(this),
+          error: function(xhr, status, err) {
+            console.log(status);
+          }.bind(this)
+      });
+    }
+  });
+
+  $("#delete").click(function(e) {
+    var username = $("#username").text();
+    $.ajax({
+      method: "POST",
+      url: "/admin/users/delete?username=" + encodeURIComponent(username),
+      cache: false,
+      success: function(data) {
+          location.reload();
+      }.bind(this),
+      error: function(xhr, status, err) {
+      }.bind(this)
+    });
+  });
+
+  $("#admin-checkbox").on('switchChange.bootstrapSwitch', function(evt, state) {
+    var url = "/admin/users/unmakeadmin"
+    if (state) {
+        url = "/admin/users/makeadmin";
+    }
+    var username = $("#username").text();
+
+    $.ajax({
+        method: "POST",
+        url: url + "?username=" + encodeURIComponent(username),
+        cache: false,
+        success: function(data) {
+          // 
+        }.bind(this),
+        error: function(xhr, status, err) {
+          // 
+        }.bind(this)
+    });
+  });
+  $("#create-user").submit(function(e) {
+    e.preventDefault();
+    var data = {};
+    data["username"] = $("#new-user").val()
+    data["email"] = $("#new-email").val()
+    data["password"] = $("#new-password").val()
+    data["admin"] = $("#new-is-admin").checked
+
+    console.log(data);
+    $.ajax({
+      type: "POST",
+      url: '/admin/users/create',
+      data: data,
+      encode: true,
+      cache: false,
+      success: function(data) {
+        location.reload();
+      }.bind(this),
+      error: function(xhr, status, err) {
+      }.bind(this)
+    });
+    return false;
+  });
+
+</script>

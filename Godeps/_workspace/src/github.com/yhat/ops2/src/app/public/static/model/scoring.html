@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ScienceOps</title>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans' rel='stylesheet prefetch' type='text/css'>
+    <link rel="stylesheet" href="/css/styles.css"/>
+    <link rel="stylesheet" href="/css/highlight.styles/github.css"/>
+    <script src="/js/lib/react-0.13.3.js"></script>
+    <script src="/js/lib/jquery-2.1.3.min.js"></script>
+    <script src="/js/lib/bootstrap.min.js"></script>
+    <script src="/js/lib/bootstrap-switch.js"></script>
+    <script type="text/javascript" src="/js/common.js"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- sidebar -->
+        <div class="col-sm-3 col-md-2 sidebar">
+          <div id="side-nav"></div>
+        </div>
+
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <div id="error-modal"></div>
+    <script type="text/javascript">
+var parts = window.location.pathname.split("/");
+var baseURL = "models";
+if (baseURL.length > 1) {
+    baseURL = parts[1];
+}
+
+var routes = {
+    "models": "overview",
+    "account": "account",
+    "admin": "admin"
+}
+var page = routes[baseURL] || "overview";
+React.render(
+    React.createElement(SideNav, {page: page}), 
+    document.getElementById('side-nav')
+);
+var errorModal = React.render(
+    React.createElement(ErrorModal, {}), 
+    document.getElementById('error-modal')
+);
+var showError = function(title, error) {
+    errorModal.show(title, error);
+};
+    </script>
+        <!-- main section -->
+<div class="row">
+  <div id="model-header"></div>
+</div>
+<hr>
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2">
+    <div id="model-nav"></div>
+  </div>
+</div>
+<hr>
+<!-- scoring -->
+<div class="row">
+  <div style="width:50%;">
+    <p class="small text-muted">Test your model by inputing sample data in the form below. Executing your model will show you exactly what your model's output will look like in production.</p>
+  </div>
+</div>
+<div class="row">
+  <div id="scoring-form"></div>
+</div>
+<!-- end scoring -->
+<script src="/js/code-samples.js"></script>
+<script src="/js/lib/highlight.min.js"></script>
+<script type="text/javascript" src="/js/scoring.js"></script>
+<!-- end section -->
+        </div>
+
+      </div>
+    </div>
+  </body>
+</html>

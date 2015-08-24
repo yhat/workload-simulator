@@ -1,10 +1,86 @@
 {
 	"ImportPath": "github.com/yhat/workload-simulator",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
 		{
 			"ImportPath": "github.com/gorilla/handlers",
 			"Rev": "4ef72b2795a418935d497c8db213080be06f8850"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "8096f47503459bcc74d1f4c487b7e6e42e5746b5"
+		},
+		{
+			"ImportPath": "github.com/gorilla/securecookie",
+			"Rev": "8e98dd730fc43f1383f19615db6f2e702c9738e8"
+		},
+		{
+			"ImportPath": "github.com/gorilla/sessions",
+			"Rev": "c8fb5963af5ff7fda6a44132ba4c0d8376e20257"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-51-ga8d8d01",
+			"Rev": "a8d8d01c4f91602f876bf5aa210274e8203a6b45"
+		},
+		{
+			"ImportPath": "github.com/timob/go-mysql",
+			"Rev": "27fe76f2bac21e757bc7deada2fd56adc074634b"
+		},
+		{
+			"ImportPath": "github.com/yhat/events/events",
+			"Rev": "a951265249bd051872a6d4e5516e31d891e7b027"
+		},
+		{
+			"ImportPath": "github.com/yhat/go-docker",
+			"Rev": "8ccfe91320c72adc49f8fa736b78bd866a1ff20d"
+		},
+		{
+			"ImportPath": "github.com/yhat/ops2/src/alb",
+			"Comment": "v2.0.0beta-11-g19e1cef",
+			"Rev": "19e1cef958eb3972af438860f15f3f3b17cff280"
+		},
+		{
+			"ImportPath": "github.com/yhat/ops2/src/app",
+			"Comment": "v2.0.0beta-11-g19e1cef",
+			"Rev": "19e1cef958eb3972af438860f15f3f3b17cff280"
+		},
+		{
+			"ImportPath": "github.com/yhat/ops2/src/db",
+			"Comment": "v2.0.0beta-11-g19e1cef",
+			"Rev": "19e1cef958eb3972af438860f15f3f3b17cff280"
+		},
+		{
+			"ImportPath": "github.com/yhat/ops2/src/mps",
+			"Comment": "v2.0.0beta-11-g19e1cef",
+			"Rev": "19e1cef958eb3972af438860f15f3f3b17cff280"
+		},
+		{
+			"ImportPath": "github.com/yhat/phash",
+			"Rev": "9fe6bb9734b47d5885028b29b4e42ecf260818e1"
+		},
+		{
+			"ImportPath": "github.com/yhat/util/dbutil/sqlutil",
+			"Rev": "8330f4e7b0e01613f4ca4dee8c45e8c825b92c8c"
+		},
+		{
+			"ImportPath": "github.com/yhat/wsutil",
+			"Rev": "666b94ea38f279dc3ac060200f708ec2d39abdce"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "7dbad50ab5b31073856416cdcfeb2796d682f844"
+		},
+		{
+			"ImportPath": "golang.org/x/net/websocket",
+			"Rev": "7dbad50ab5b31073856416cdcfeb2796d682f844"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

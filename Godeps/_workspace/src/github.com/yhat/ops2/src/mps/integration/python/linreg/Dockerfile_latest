@@ -1,0 +1,11 @@
+# THIS FILE WAS GENERATED, DO NOT EDIT
+FROM continuumio/anaconda:latest
+
+run conda install pandas==0.16.1
+
+run pip install yhat==1.3.6
+
+copy model.py /root/model.py
+workdir /root
+
+cmd ["python", "model.py"]

@@ -1,0 +1,11 @@
+This model is to test if client code can pick up a model that imports
+a package in a subdir such as:
+
+$ tree
+.
+├── foo
+│   ├── foo.py
+│   ├── foo.pyc
+│   ├── __init__.py
+│   └── __init__.pyc
+└── hello.py

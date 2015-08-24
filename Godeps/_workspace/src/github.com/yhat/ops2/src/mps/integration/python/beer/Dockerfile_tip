@@ -1,0 +1,17 @@
+# THIS FILE WAS GENERATED, DO NOT EDIT
+FROM continuumio/anaconda:latest
+
+run conda install -y pandas==0.15.1
+
+
+run apt-get install -y wget unzip
+run wget https://github.com/yhat/yhat-client/archive/master.zip
+run unzip master.zip
+run pip install -e yhat-client-master
+
+
+copy beer.py /root/beer.py
+copy beer_reviews.csv /root/beer_reviews.csv
+workdir /root
+
+cmd ["python", "beer.py"]

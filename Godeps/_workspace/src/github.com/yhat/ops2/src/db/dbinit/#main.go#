@@ -1,0 +1,142 @@
+package main
+
+import (
+	"bytes"
+	"database/sql"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"time"
+
+	_ "github.com/timob/go-mysql"
+	"github.com/yhat/ops2/src/db"
+)
+
+const (
+	mysqlImage = "mysql:5.6"
+	name       = "scienceops-mysql-dev"
+)
+
+func usage() {
+	fmt.Fprintf(os.Stderr, "dbinit [sqldir] [optional seed script] [seed num users] [seed num models]\n")
+	os.Exit(2)
+}
+
+func seedFunc(args []string) func(tx *sql.Tx) error {
+	if len(args) == 0 {
+		return nil
+	}
+	script := args[0]
+	n := "5"
+	m := "50"
+	if len(args) >= 2 {
+		n = os.Args[1]
+	}
+	if len(args) >= 3 {
+		m = os.Args[2]
+	}
+
+	return func(tx *sql.Tx) error {
+		log.Println("seeding db")
+		tempdir, err := ioutil.TempDir("", "")
+		if err != nil {
+			return err
+		}
+		defer os.RemoveAll(tempdir)
+		seedFile := filepath.Join(tempdir, "seed.sql")
+
+		out, err := exec.Command("python", script, seedFile, n, m).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to seed db: %v %s", err, out)
+		}
+
+		return db.RunScript(tx, seedFile)
+	}
+}
+
+func main() {
+	// check if the container already exists
+	if err := exec.Command("docker", "inspect", mysqlImage).Run(); err != nil {
+		log.Fatalf("command requires '%s' please pull it from docker hub", mysqlImage)
+	}
+	if err := exec.Command("docker", "inspect", name).Run(); err == nil {
+		log.Println("database already running")
+		return
+	}
+
+	if len(os.Args) < 2 {
+		usage()
+	}
+
+	seed := seedFunc(os.Args[2:])
+
+	// start a database
+	if err := m(os.Args[1], seed); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("success")
+
+	log.Println("success")
+}
+
+func m(sqlDir string, seed func(tx *sql.Tx) error) (err error) {
+
+	// run the docker container
+	cmd := exec.Command("docker", "run", "-d", "--name="+name, "-e", "MYSQL_ROOT_PASSWORD=password",
+		"-p", "3306:3306", "mysql:5.6")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("can't create container: %v %s", err, out)
+	}
+	defer func(cid string) {
+		if err != nil {
+			out, rErr := exec.Command("docker", "rm", "-f", cid).CombinedOutput()
+			if rErr != nil {
+				log.Println("could not remove container %s: %s", cid, out)
+			}
+		}
+	}(string(bytes.TrimSpace(out)))
+
+	rootStr := "mysql://root:password@0.0.0.0:3306/mysql?client-multi-results&strict"
+
+	// wait for the database to become available
+	conn, err := sql.Open("mysql", rootStr)
+	if err != nil {
+		return fmt.Errorf("can't connect to database: %v", err)
+	}
+	log.Println("waiting for mysql database to come up")
+	opened := false
+	for i := 0; i < 30; i++ {
+		// It takes a couple seconds to start MySQL.
+		if err := conn.Ping(); err == nil {
+			opened = true
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	if !opened {
+		return fmt.Errorf("can't ping database %s", rootStr)
+	}
+
+	// the database is up, time to intialize it
+	log.Println("database is up running init scripts")
+	tx, err := conn.Begin()
+	if err != nil {
+		return fmt.Errorf("cannot begin transaction")
+	}
+	defer tx.Rollback()
+
+	if err = db.InitTables(tx, sqlDir); err != nil {
+		return fmt.Errorf("could not initalize database: %v", err)
+	}
+	if seed != nil {
+		if err = seed(tx); err != nil {
+			return fmt.Errorf("could not seed db: %v", err)
+		}
+	}
+	return tx.Commit()
+}
