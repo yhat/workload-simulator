@@ -23,16 +23,14 @@ type Config struct {
 }
 
 // ReadConfig reads in a YAML config file for the Workload simulator app.
-func ReadConfig(configPath string) (Config, error) {
-	var cfg Config
-
+func ReadConfig(configPath string) (*Config, error) {
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return cfg, fmt.Errorf("error opening config file %s: %v", configPath, err)
+		return nil, fmt.Errorf("error opening config file %s: %v", configPath, err)
 	}
-
+	cfg := Config{}
 	if err = yaml.Unmarshal(content, &cfg); err != nil {
-		return cfg, fmt.Errorf("error reading config file %s: %v", configPath, err)
+		return nil, fmt.Errorf("error reading config file %s: %v", configPath, err)
 	}
-	return cfg, err
+	return &cfg, err
 }

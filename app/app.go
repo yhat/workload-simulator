@@ -12,33 +12,29 @@ import (
 	"github.com/gorilla/handlers"
 )
 
-// OpsConfig is a type used to define the target Ops
-// server
-type OpsConfig struct {
-	Host   string
-	ApiKey string
-	User   string
-}
-
 // Configuration for web app.
 type AppConfig struct {
+	// web stuff
 	Host      string
 	Port      int
-	MaxDial   int
 	PublicDir string
 	ViewsDir  string
 	ReportDir string
+
+	// Settings for worker concurrency and display settings for dials.
+	MaxDial    int
+	MaxWorkers int
+
+	// used to define the target Ops server.
+	OpsHost   string
+	OpsApiKey string
+	OpsUser   string
 }
 
 // App defines the app and configs
 type App struct {
 	// Configuration for web app.
-	host      string
-	port      int
-	maxDial   int
-	reportDir string
-	viewsDir  string
-	public    string
+	config *AppConfig
 
 	// Go template map
 	templates map[string]*template.Template
@@ -46,13 +42,9 @@ type App struct {
 	// http router
 	router http.Handler
 
-	// Configuration for target ops server.
-	ops *OpsConfig
-
-	// Worker configuration.
-	workerProcs int
-	kill        chan int
-	report      chan string
+	// channels for workers and statMonitor
+	kill   chan int
+	report chan string
 }
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -60,19 +52,26 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // New constructs a pointer to a new App and returns any error encountered.
-func New(config *AppConfig) (*App, error) {
-	if config.PublicDir == "" {
-		config.PublicDir = "/var/workload-simulator/public/static"
+func New(config *Config) (*App, error) {
+	if config.Web.PublicDir == "" {
+		config.Web.PublicDir = "/var/workload-simulator/public/static"
+	}
+	// new app config from config yaml.
+	// OpsConfig can be nil on start since it is specified by the UI.
+	appCfg := &AppConfig{
+		Host:      config.Web.Hostname,
+		Port:      config.Web.HttpPort,
+		PublicDir: config.Web.PublicDir,
+		ViewsDir:  config.Web.ViewsDir,
+		ReportDir: config.Web.ReportDir,
+
+		MaxDial:    config.Settings.MaxDial,
+		MaxWorkers: config.Settings.MaxWorkers,
 	}
 
-	// OpsConfig can be nil on start since it is specified by the UI.
+	pubDir := config.Web.PublicDir
 	app := App{
-		host:      config.Host,
-		port:      config.Port,
-		maxDial:   config.MaxDial,
-		reportDir: config.ReportDir,
-		viewsDir:  config.ViewsDir,
-		public:    config.PublicDir,
+		config:    appCfg,
 		templates: make(map[string]*template.Template),
 	}
 
@@ -81,7 +80,7 @@ func New(config *AppConfig) (*App, error) {
 
 	// Static assets
 	serveStatic := func(name string) {
-		fs := http.FileServer(http.Dir(filepath.Join(app.public, name)))
+		fs := http.FileServer(http.Dir(filepath.Join(pubDir, name)))
 		prefix := "/static/" + name + "/"
 		r.Handle(prefix, http.StripPrefix(prefix, fs))
 	}
@@ -132,7 +131,7 @@ func (app *App) Render(name string, w http.ResponseWriter, r *http.Request, data
 	if data == nil {
 		data = make(map[string]interface{})
 	}
-	if err := app.compileTemplates(app.viewsDir); err != nil {
+	if err := app.compileTemplates(app.config.ViewsDir); err != nil {
 		msg := fmt.Sprintf("error compiling templates: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return

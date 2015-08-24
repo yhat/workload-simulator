@@ -16,26 +16,14 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	// TODO move to config
-	s := struct {
-		memsql_host string
-		memsql_port string
-		memsql_user string
-		memsql_pass string
-		memsql_db   string
-		workers     string
-	}{"memhost", "6000", "bob", "foo", "mydb", "100"}
 	data := map[string]interface{}{
 		"Live":       false,
 		"Redirected": false,
-		"MaxDial":    50,
-		"Host":       "sandbox.yhathq.com",
-		"ApiKey":     "2463b3c71264ef61de1f6af8338d22e7",
-		"User":       "colin",
-		"Pass":       "",
-		"DB":         "",
+		"MaxDial":    app.config.MaxDial,
+		"Host":       app.config.OpsHost,
+		"ApiKey":     app.config.OpsApiKey,
+		"User":       app.config.OpsUser,
 		"Workers":    50,
-		"Settings":   s,
 	}
 	app.Render("index", w, r, data)
 }
@@ -70,8 +58,8 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("error parsing form settings: %v\n", err)
 		}
 
-		// Some nasty type conversion to parse a nested json. This builds
-		// a map that maps a window to a model input for Ops.
+		// This builds a map that maps a model prediction window to a model
+		// input for Ops.
 		wrk := make(map[string]*ModelInput)
 		for k, v := range work {
 			q := queryData{}
@@ -97,8 +85,9 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			workload: wrk,
 			settings: settings,
 		}
+		// TODO: iterate over workload map and create a work struct for each
+		// window.
 		wk0 := &Work{modelId: "0", workload: &workld, reqTotal: 100000}
-		wk1 := &Work{modelId: "1", workload: &workld, reqTotal: 100000}
 
 		kill := make(chan int)
 		report := make(chan string)
@@ -106,9 +95,8 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 		app.kill = kill
 		app.report = report
 
-		for i := 0; i < 1; i++ {
+		for i := 0; i < 100; i++ {
 			Worker(stats, kill, time.Second, wk0)
-			Worker(stats, kill, time.Second, wk1)
 		}
 
 	default:
