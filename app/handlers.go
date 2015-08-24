@@ -23,7 +23,7 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 		"Host":       app.config.OpsHost,
 		"ApiKey":     app.config.OpsApiKey,
 		"User":       app.config.OpsUser,
-		"Workers":    50,
+		"Workers":    app.config.MaxWorkers,
 	}
 	app.Render("index", w, r, data)
 }

@@ -56,9 +56,9 @@ func New(config *Config) (*App, error) {
 	if config.Web.PublicDir == "" {
 		config.Web.PublicDir = "/var/workload-simulator/public/static"
 	}
-	// new app config from config yaml.
+	// create a new app config from config yaml and a new App.
 	// OpsConfig can be nil on start since it is specified by the UI.
-	appCfg := &AppConfig{
+	appCfg := AppConfig{
 		Host:      config.Web.Hostname,
 		Port:      config.Web.HttpPort,
 		PublicDir: config.Web.PublicDir,
@@ -69,9 +69,8 @@ func New(config *Config) (*App, error) {
 		MaxWorkers: config.Settings.MaxWorkers,
 	}
 
-	pubDir := config.Web.PublicDir
 	app := App{
-		config:    appCfg,
+		config:    &appCfg,
 		templates: make(map[string]*template.Template),
 	}
 
@@ -79,6 +78,7 @@ func New(config *Config) (*App, error) {
 	r := http.NewServeMux()
 
 	// Static assets
+	pubDir := config.Web.PublicDir
 	serveStatic := func(name string) {
 		fs := http.FileServer(http.Dir(filepath.Join(pubDir, name)))
 		prefix := "/static/" + name + "/"

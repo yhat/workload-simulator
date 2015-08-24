@@ -9,4 +9,4 @@ web:
 
 settings:
     max_dial: 20
-    max_workers: 50
+    max_workers: 30
