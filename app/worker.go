@@ -63,12 +63,6 @@ func opsPredictHTTP(username, model, apikey, host string, input interface{}) (*h
 	return resp, nil
 }
 
-type Work struct {
-	modelId  string
-	workload *Workload
-	reqTotal int
-}
-
 // Worker func that spawns a goroutine that does work and emits statistics to a stats channel
 // every period duratio1vn.
 func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Workload) {
