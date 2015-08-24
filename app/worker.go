@@ -67,10 +67,11 @@ func opsPredictHTTP(username, model, apikey, host string, input interface{}) (*h
 // channel every period duration seconds.
 func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, id int, w *Workload) {
 	// TODO add predicitons made vs pred completed.
-	ticker := time.NewTicker(dt)
-	go func(n int) {
+
+	go func(id, n int, dt time.Duration) {
 		predCount := 0
 		predSent := 0
+		ticker := time.NewTicker(dt)
 		for i := 0; i < n; i++ {
 			predSent += 1
 			fmt.Printf("id: %d, cnt:%+v\n", id, predCount)
@@ -78,11 +79,11 @@ func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, id int, w *Wo
 			case <-ticker.C:
 				// send stats and reset request counter
 				// TODO: add predSent to Stat struct
-				s := &Stat{w.modelId, predCount, dt.Seconds()}
+				s := &Stat{w.modelId, predSent, predCount, dt.Seconds()}
 				stats <- s
 				predCount = 0
 			case <-kill:
-				fmt.Printf("im dying!!!")
+				fmt.Printf("id: %d: SIGKILL good-bye!!!", id)
 				return
 			default:
 				// Do work and increment counter
@@ -96,28 +97,39 @@ func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, id int, w *Wo
 		}
 		// exit goroutine when work is done.
 		return
-	}(w.nrequests)
+	}(id, w.nrequests, dt)
 	return
 }
 
 // Stat represents request statistics
 type Stat struct {
-	modelId string
-	nreq    int
-	dt      float64
+	modelId  string
+	nreqSent int
+	nreqDone int
+	dt       float64
+}
+
+type Metric struct {
+	reqSent     int
+	reqComplete int
+	reqPerSec   int
 }
 
 func StatsMonitor(report chan<- string, dt time.Duration) chan *Stat {
 	stats := make(chan *Stat)
-	requestStats := make(map[string]int)
-
+	// TODO: Merge these stats into one map after we figure out how
+	// to change the front end.
+	requestPerSec := make(map[string]int)
+	requestMetrics := make(map[string]Metric)
+	reqSent := 0
+	reqDone := 0
 	ticker := time.NewTicker(dt)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				// send report of stats.
-				r, err := json.Marshal(requestStats)
+				r, err := json.Marshal(requestPerSec)
 				if err != nil {
 					fmt.Printf("error marshalling json stats: %v\n", err)
 					return
@@ -125,8 +137,12 @@ func StatsMonitor(report chan<- string, dt time.Duration) chan *Stat {
 				b := bytes.NewBuffer(r)
 				report <- b.String()
 			case s := <-stats:
-				reqs := float64(s.nreq) / s.dt
-				requestStats[s.modelId] = int(reqs)
+				reqs := float64(s.nreqDone) / s.dt
+				reqSent += s.nreqSent
+				reqDone += s.nreqDone
+				newStat := Metric{reqSent, reqDone, int(reqs)}
+				requestMetrics[s.modelId] = newStat
+				requestPerSec[s.modelId] = int(reqs)
 			}
 
 		}

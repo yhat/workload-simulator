@@ -68,7 +68,6 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 		s := r.FormValue("settings")
 
 		work := make(map[string]modelData)
-		fmt.Println(wl)
 		err := json.Unmarshal([]byte(wl), &work)
 		if err != nil {
 			fmt.Printf("error parsing workload form: %v\n", err)
@@ -179,7 +178,7 @@ func (app *App) handleUnload(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// handlePause pauses the worker goroutines.
+// handlePause kills the worker goroutines.
 func (app *App) handlePause(w http.ResponseWriter, r *http.Request) {
 	nw := app.config.currentWorkers
 	for i := 0; i < nw; i++ {
@@ -248,5 +247,10 @@ func (app *App) handleSave(w http.ResponseWriter, r *http.Request) {
 
 // handleKill kills all worker goroutines
 func (app *App) handleKill(w http.ResponseWriter, r *http.Request) {
+	nw := app.config.currentWorkers
+	for i := 0; i < nw; i++ {
+		app.Killc <- 1
+	}
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
