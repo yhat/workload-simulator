@@ -23,11 +23,11 @@ type Workload struct {
 	modelInput map[string]interface{}
 }
 
-// Predict sends a POST request to an ops model.
+// Predict sends a POST request to an ops model endpoint.
 func (w *Workload) Predict() error {
 	data := w.modelInput
 
-	// Make a prediciton.
+	// Make a prediciton to this remote host.
 	username := w.user
 	modelname := w.modelName
 	apikey := w.apiKey
@@ -63,17 +63,23 @@ func opsPredictHTTP(username, model, apikey, host string, input interface{}) (*h
 	return resp, nil
 }
 
-// Worker func that spawns a goroutine that does work and emits statistics to a stats channel
-// every period duration.
-func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Workload) {
+// Worker func that spawns a goroutine that does work and emits statistics to a stats
+// channel every period duration seconds.
+func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, id int, w *Workload) {
+	// TODO add predicitons made vs pred completed.
 	ticker := time.NewTicker(dt)
-	predCount := 0
-	go func() {
-		for i := 0; i < w.nrequests; i++ {
+	go func(n int) {
+		predCount := 0
+		predSent := 0
+		for i := 0; i < n; i++ {
+			predSent += 1
+			fmt.Printf("id: %d, cnt:%+v\n", id, predCount)
 			select {
 			case <-ticker.C:
 				// send stats and reset request counter
-				stats <- &Stat{w.modelId, predCount, int(dt.Seconds())}
+				// TODO: add predSent to Stat struct
+				s := &Stat{w.modelId, predCount, dt.Seconds()}
+				stats <- s
 				predCount = 0
 			case <-kill:
 				fmt.Printf("im dying!!!")
@@ -90,7 +96,7 @@ func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Workload) 
 		}
 		// exit goroutine when work is done.
 		return
-	}()
+	}(w.nrequests)
 	return
 }
 
@@ -98,10 +104,10 @@ func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Workload) 
 type Stat struct {
 	modelId string
 	nreq    int
-	dt      int
+	dt      float64
 }
 
-func StatsMonitor(report chan<- string, kill <-chan int, dt time.Duration) chan *Stat {
+func StatsMonitor(report chan<- string, dt time.Duration) chan *Stat {
 	stats := make(chan *Stat)
 	requestStats := make(map[string]int)
 
@@ -113,18 +119,14 @@ func StatsMonitor(report chan<- string, kill <-chan int, dt time.Duration) chan 
 				// send report of stats.
 				r, err := json.Marshal(requestStats)
 				if err != nil {
-					fmt.Printf("error marshalling json stats: %v", err)
+					fmt.Printf("error marshalling json stats: %v\n", err)
 					return
 				}
 				b := bytes.NewBuffer(r)
 				report <- b.String()
 			case s := <-stats:
-				idt := dt.Seconds()
-				reqs := float64(s.nreq) / idt
+				reqs := float64(s.nreq) / s.dt
 				requestStats[s.modelId] = int(reqs)
-			case <-kill:
-				fmt.Println("[StatsMonitor] got SIGKILL exiting.")
-				return
 			}
 
 		}

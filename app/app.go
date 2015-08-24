@@ -22,8 +22,9 @@ type AppConfig struct {
 	ReportDir string
 
 	// Settings for worker concurrency and display settings for dials.
-	MaxDial    int
-	MaxWorkers int
+	MaxDial        int
+	MaxWorkers     int
+	currentWorkers int
 
 	// Config to define the target Ops server.
 	OpsHost   string

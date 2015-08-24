@@ -32,7 +32,7 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 
 type modelData struct {
 	Query string
-	QPS   int
+	QPS   string
 }
 
 type queryData struct {
@@ -68,9 +68,11 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 		s := r.FormValue("settings")
 
 		work := make(map[string]modelData)
+		fmt.Println(wl)
 		err := json.Unmarshal([]byte(wl), &work)
 		if err != nil {
 			fmt.Printf("error parsing workload form: %v\n", err)
+			return
 		}
 
 		settings := &settings{}
@@ -87,16 +89,30 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			err = json.Unmarshal([]byte(v.Query), &q)
 			if err != nil {
 				fmt.Printf("error parsing workload form: %v\n", err)
+				data := make(map[string]interface{})
+				b, err := formatJSONresp(false, data)
+				if err != nil {
+					http.Error(w, "failed to parse workload data", http.StatusInternalServerError)
+
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Write(b)
 			}
 
 			modelName := q.Model
 			input := q.Input
 
+			iqps, err := strconv.Atoi(v.QPS)
+			if err != nil {
+				fmt.Println("could not parse qps into int:")
+				return
+			}
 			// create model input for each window.
 			modelInput := &modelInput{
 				name:  modelName,
 				input: input,
-				qps:   v.QPS,
+				qps:   iqps,
 			}
 			wrk[k] = modelInput
 
@@ -108,8 +124,14 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "no work to be done", http.StatusInternalServerError)
 			return
 		}
+		nw, err := strconv.Atoi(settings.Workers)
+		if err != nil {
+			http.Error(w, "error parsing worker count", http.StatusInternalServerError)
+			return
+		}
+		app.config.currentWorkers = nw
 
-		for i := 0; i < app.config.MaxWorkers; i++ {
+		for i := 0; i < nw; i++ {
 			// Choose a model from the workload at random.
 			modelId := strconv.Itoa(rand.Intn(n))
 			model := wrk[modelId]
@@ -122,9 +144,8 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 				modelName:  model.name,
 				modelInput: model.input,
 			}
-			Worker(app.Statc, app.Killc, 100*time.Millisecond, work)
+			Worker(app.Statc, app.Killc, 500*time.Millisecond, i, work)
 		}
-
 	default:
 		http.Error(w, "I only respond to POSTs.", http.StatusNotImplemented)
 	}
@@ -160,7 +181,12 @@ func (app *App) handleUnload(w http.ResponseWriter, r *http.Request) {
 
 // handlePause pauses the worker goroutines.
 func (app *App) handlePause(w http.ResponseWriter, r *http.Request) {
-
+	nw := app.config.currentWorkers
+	for i := 0; i < nw; i++ {
+		app.Killc <- 1
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 // handleStats asks worker goroutines to report stats to the app
@@ -180,7 +206,6 @@ func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
 			stats[k] = int(v)
 		}
 		data["stats"] = stats
-		fmt.Printf("data = %v", data)
 
 	case <-time.After(time.Second):
 		data["running"] = false

@@ -40,10 +40,9 @@ func main() {
 	a.Killc = killc
 	a.Reportc = reportc
 
-	// Start a StatMonitor goroutine that maintains a map of models
-	// to stats.
+	// Start a StatMonitor goroutine that maintains a map of models to stats.
 	fmt.Println("starting stats mointor")
-	stats := app.StatsMonitor(reportc, killc, 100*time.Millisecond)
+	stats := app.StatsMonitor(reportc, 100*time.Millisecond)
 	a.Statc = stats
 
 	log.Printf("serving http on port: %d\n", cfg.Web.HttpPort)
