@@ -64,7 +64,7 @@ func opsPredictHTTP(username, model, apikey, host string, input interface{}) (*h
 }
 
 // Worker func that spawns a goroutine that does work and emits statistics to a stats channel
-// every period duratio1vn.
+// every period duration.
 func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Workload) {
 	ticker := time.NewTicker(dt)
 	predCount := 0
@@ -88,6 +88,8 @@ func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Workload) 
 				predCount += 1
 			}
 		}
+		// exit goroutine when work is done.
+		return
 	}()
 	return
 }
@@ -99,7 +101,7 @@ type Stat struct {
 	dt      int
 }
 
-func StatsMonitor(report chan<- string, kill <-chan int, dt time.Duration) chan<- *Stat {
+func StatsMonitor(report chan<- string, kill <-chan int, dt time.Duration) chan *Stat {
 	stats := make(chan *Stat)
 	requestStats := make(map[string]int)
 
@@ -121,7 +123,7 @@ func StatsMonitor(report chan<- string, kill <-chan int, dt time.Duration) chan<
 				reqs := float64(s.nreq) / idt
 				requestStats[s.modelId] = int(reqs)
 			case <-kill:
-				fmt.Println("[StatsMonitor] got KILLSIG exiting.")
+				fmt.Println("[StatsMonitor] got SIGKILL exiting.")
 				return
 			}
 

@@ -102,16 +102,6 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		// TODO: figure out where to put these.
-		kill := make(chan int)
-		report := make(chan string)
-
-		// init statsMonitor. Todo: Move this into app constructor.
-		stats := StatsMonitor(report, kill, 100*time.Millisecond)
-
-		app.kill = kill
-		app.report = report
-
 		// Spawn goroutines and randomly assign work
 		n := len(wrk)
 		if n == 0 {
@@ -132,7 +122,7 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 				modelName:  model.name,
 				modelInput: model.input,
 			}
-			Worker(stats, kill, 100*time.Millisecond, work)
+			Worker(app.Statc, app.Killc, 100*time.Millisecond, work)
 		}
 
 	default:
@@ -178,7 +168,7 @@ func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	stats := make(map[string]int)
 	select {
-	case statReport := <-app.report:
+	case statReport := <-app.Reportc:
 		var report map[string]int
 		err := json.Unmarshal([]byte(statReport), &report)
 		if err != nil {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/yhat/workload-simulator/app"
 )
@@ -25,15 +26,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	app, err := app.New(cfg)
+	a, err := app.New(cfg)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Init communication channels for StatsMonitor and Workers
+	killc := make(chan int)
+	reportc := make(chan string)
+
+	a.Killc = killc
+	a.Reportc = reportc
+
+	// init statsMonitor. Todo: Move this into app constructor.
+	stats := app.StatsMonitor(reportc, killc, 100*time.Millisecond)
+	a.Statc = stats
+
+	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Web.HttpPort), a)
 	if err != nil {
 		log.Println(err)
 	}
 
 	log.Printf("serving http on port: %d\n", cfg.Web.HttpPort)
-
-	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Web.HttpPort), app)
-	if err != nil {
-		log.Println(err)
-	}
 }

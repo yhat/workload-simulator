@@ -43,8 +43,9 @@ type App struct {
 	router http.Handler
 
 	// channels for workers and statMonitor
-	kill   chan int
-	report chan string
+	Killc   chan int
+	Reportc chan string
+	Statc   chan *Stat
 }
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
