@@ -3,7 +3,9 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -38,6 +40,25 @@ type queryData struct {
 	Input map[string]interface{}
 }
 
+type settings struct {
+	OpsHost    string `json:"ops_host"`
+	ApiKey     string `json:"ops_apikey"`
+	User       string `json:"ops_user"`
+	MaxDialVal int    `json:"dial_max_value"`
+	Workers    string `json:"workers"`
+}
+
+type modelInput struct {
+	// model name
+	name string
+
+	// input data
+	input map[string]interface{}
+
+	// queries per second
+	qps int
+}
+
 // handleWorkload sends workload to worker goroutines.
 func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -52,7 +73,7 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("error parsing workload form: %v\n", err)
 		}
 
-		settings := &Settings{}
+		settings := &settings{}
 		err = json.Unmarshal([]byte(s), settings)
 		if err != nil {
 			fmt.Printf("error parsing form settings: %v\n", err)
@@ -60,7 +81,7 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 
 		// This builds a map that maps a model prediction window to a model
 		// input for Ops.
-		wrk := make(map[string]*ModelInput)
+		wrk := make(map[string]*modelInput)
 		for k, v := range work {
 			q := queryData{}
 			err = json.Unmarshal([]byte(v.Query), &q)
@@ -72,7 +93,7 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			input := q.Input
 
 			// create model input for each window.
-			modelInput := &ModelInput{
+			modelInput := &modelInput{
 				name:  modelName,
 				input: input,
 				qps:   v.QPS,
@@ -81,22 +102,37 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		workld := Workload{
-			workload: wrk,
-			settings: settings,
-		}
-		// TODO: iterate over workload map and create a work struct for each
-		// window.
-		wk0 := &Work{modelId: "0", workload: &workld, reqTotal: 100000}
-
+		// TODO: figure out where to put these.
 		kill := make(chan int)
 		report := make(chan string)
+
+		// init statsMonitor. Todo: Move this into app constructor.
 		stats := StatsMonitor(report, kill, 100*time.Millisecond)
+
 		app.kill = kill
 		app.report = report
 
-		for i := 0; i < 100; i++ {
-			Worker(stats, kill, time.Second, wk0)
+		// Spawn goroutines and randomly assign work
+		n := len(wrk)
+		if n == 0 {
+			http.Error(w, "no work to be done", http.StatusInternalServerError)
+			return
+		}
+
+		for i := 0; i < app.config.MaxWorkers; i++ {
+			// Choose a model from the workload at random.
+			modelId := strconv.Itoa(rand.Intn(n))
+			model := wrk[modelId]
+			work := &Workload{
+				opsHost:    settings.OpsHost,
+				apiKey:     settings.ApiKey,
+				user:       settings.User,
+				nrequests:  model.qps,
+				modelId:    modelId,
+				modelName:  model.name,
+				modelInput: model.input,
+			}
+			Worker(stats, kill, 100*time.Millisecond, work)
 		}
 
 	default:

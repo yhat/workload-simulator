@@ -5,56 +5,33 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
 
-type Settings struct {
-	OpsHost    string `json:"ops_host"`
-	ApiKey     string `json:"ops_apikey"`
-	User       string `json:"ops_user"`
-	MaxDialVal int    `json:"dial_max_value"`
-	Workers    string `json:"workers"`
-}
-
-type ModelInput struct {
-	// model name
-	name string
-
-	// input data
-	input map[string]interface{}
-
-	// queries per second
-	qps int
-}
-
 type Workload struct {
-	workload map[string]*ModelInput
-	settings *Settings
+	// remote ops server info
+	opsHost string
+	apiKey  string
+	user    string
+
+	// model request data
+	nrequests  int
+	modelId    string
+	modelName  string
+	modelInput map[string]interface{}
 }
 
-// Predict sends a POST request to an ops model. It chooses a random model from the
-// workload map. The way that the ui is set up, will allow you to run n requests in
-// order. We want to change this eventually, but for now each prediction will choose
-// a random model from the workload map and send a request.
+// Predict sends a POST request to an ops model.
 func (w *Workload) Predict() error {
-	n := len(w.workload)
-	if n == 0 {
-		return fmt.Errorf("no work to be done")
-	}
-
-	// Choose a model from the workload at random.
-	model := w.workload[strconv.Itoa(rand.Intn(n))]
-	data := model.input
+	data := w.modelInput
 
 	// Make a prediciton.
-	username := w.settings.User
-	modelname := model.name
-	apikey := w.settings.ApiKey
-	host := w.settings.OpsHost
+	username := w.user
+	modelname := w.modelName
+	apikey := w.apiKey
+	host := w.opsHost
 
 	_, err := opsPredictHTTP(username, modelname, apikey, host, data)
 	if err != nil {
@@ -94,22 +71,22 @@ type Work struct {
 
 // Worker func that spawns a goroutine that does work and emits statistics to a stats channel
 // every period duratio1vn.
-func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Work) {
+func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, w *Workload) {
 	ticker := time.NewTicker(dt)
 	predCount := 0
 	go func() {
-		for i := 0; i < w.reqTotal; i++ {
+		for i := 0; i < w.nrequests; i++ {
 			select {
 			case <-ticker.C:
 				// send stats and reset request counter
-				stats <- &Stat{w.modelId, predCount, int(dt)}
+				stats <- &Stat{w.modelId, predCount, int(dt.Seconds())}
 				predCount = 0
 			case <-kill:
 				fmt.Printf("im dying!!!")
 				return
 			default:
 				// Do work and increment counter
-				err := w.workload.Predict()
+				err := w.Predict()
 				if err != nil {
 					fmt.Printf("Prediction error: %v\n", err)
 					return
