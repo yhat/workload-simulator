@@ -29,6 +29,7 @@ function onWorkloadReceive(data, textStatus, jqXHR) {
     {
         var total_qps = 0;
         stats = data['stats'];
+	
         for (var i in stats)
         {
             var qps_number = parseFloat(stats[i]);
@@ -36,7 +37,7 @@ function onWorkloadReceive(data, textStatus, jqXHR) {
             query_widget_map[i].setDialValue(qps_number);
         }
         qps_graph.record_point(total_qps);
-
+	r_lag_graph.record_point(total_qps);
         setTimeout(updateWorkloadLoop, 100);
     }
 }
