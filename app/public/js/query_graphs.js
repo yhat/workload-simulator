@@ -60,7 +60,7 @@ var QPSConfig =  {
                    enabled: false
                },
     series: [{
-                name: 'Random data',
+                name: 'requests per second',
                 data:null
                     /*
                 (function() {
@@ -113,7 +113,7 @@ var rLagConfig =  {
            },
     yAxis: {
                title: {
-                          text: 'Requests Per Second'
+                          text: 'Total Requests'
                       },
                plotLines: [{
                               value: 0,
@@ -135,7 +135,7 @@ var rLagConfig =  {
                    enabled: false
                },
     series: [{
-                name: 'Random data',
+                name: 'requests completed',
                 data:null
                     /*
                 (function() {

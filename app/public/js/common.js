@@ -531,6 +531,4 @@ $(document).ready(function() {
 
     loadCachedSettings();
     autoSave(cacheSettings);
-
-    initializeConsole();
 });

@@ -3,9 +3,9 @@
 web:
     hostname:   localhost
     http_port:  8000
-    public_dir: /Users/sushanthbhaskarabhatla/gopath/src/github.com/yhat/workload-simulator/app/public
-    views_dir: /Users/sushanthbhaskarabhatla/gopath/src/github.com/yhat/workload-simulator/app/views
-    report_dir: /Users/sushanthbhaskarabhatla/workload_sim
+    public_dir: /home/ec2/gopath/src/github.com/yhat/workload-simulator/app/public
+    views_dir: /home/ec2/gopath/src/github.com/yhat/workload-simulator/app/views
+    report_dir: /home/ec2/workload_sim
 
 settings:
     max_dial: 20
