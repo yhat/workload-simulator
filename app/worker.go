@@ -60,28 +60,28 @@ func Worker(stats chan *Stat, kill <-chan int, w *Workload) {
 		ticker := time.NewTicker(dt)
 		for i := 0; i < n; i++ {
 			predSent += 1
-			fmt.Printf("id: %d, cnt:%+v\n", id, predCount)
 			select {
 			case <-ticker.C:
 				// send stats and reset request counter
 				// TODO: add predSent to Stat struct
-				s := &Stat{batchId, w.modelId, w.modelName, predSent, predCount, dt.Seconds()}
+				s := &Stat{w, predSent, predCount}
 				stats <- s
 				predCount = 0
 			case <-kill:
-				fmt.Printf("id: %d: SIGKILL good-bye!!!", id)
+				log.Printf("worker id: %d: SIGKILL good-bye!!!", id)
 				return
 			default:
 				// Do work and increment counter
 				err := w.Predict()
 				if err != nil {
-					fmt.Printf("Prediction error: %v\n", err)
+					log.Printf("Prediction error: %v\n", err)
 					return
 				}
 				predCount += 1
 			}
 		}
 		// exit goroutine when work is done.
+		log.Printf("worker id: %d: Done making %d requests dying!!!", id, n)
 		return
 	}(id, batchId, w.nrequests, dt)
 	return

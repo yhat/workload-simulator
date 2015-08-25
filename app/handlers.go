@@ -134,6 +134,10 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 		}
 		app.reportfile = outfile
 
+		if err = WriteHeader(outfile); err != nil {
+			log.Printf("failed to write csv header: %v", err)
+		}
+
 		// Spawn goroutines and randomly assign work
 		n := len(wrk)
 		if n == 0 {
@@ -210,6 +214,7 @@ func (app *App) handlePause(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("failed to close report file: %v", err)
 		}
+		app.reportfile = nil
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -224,7 +229,7 @@ func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
 	case statReport := <-app.Reportc:
 		var r map[string]int
 
-		err := json.Unmarshal([]byte(statReport.requestData), &r)
+		err := json.Unmarshal([]byte(statReport.requestPerS), &r)
 		if err != nil {
 			http.Error(w, "Stats error", http.StatusInternalServerError)
 			return
@@ -239,9 +244,10 @@ func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
 			csv := &CsvMetric{
 				ts:           ts,
 				batchId:      statReport.batchId,
-				opsHost:      app.config.OpsHost,
-				opsUser:      app.config.OpsUser,
+				opsHost:      statReport.opsHost,
+				opsUser:      statReport.user,
 				opsModelName: statReport.modelName,
+				nWorkers:     app.config.currentWorkers,
 				reqSent:      statReport.requestSent,
 				reqComplete:  statReport.requestDone,
 				reqPerSec:    v,
