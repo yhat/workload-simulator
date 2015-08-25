@@ -224,18 +224,23 @@ func (app *App) handlePause(w http.ResponseWriter, r *http.Request) {
 // handleStats asks worker goroutines to report stats to the app
 func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
+	rdone := make(map[string]int)
 	stats := make(map[string]int)
 	select {
 	case statReport := <-app.Reportc:
 		var r map[string]int
-
+		var rd map[string]int
 		err := json.Unmarshal([]byte(statReport.requestPerS), &r)
 		if err != nil {
 			http.Error(w, "Stats error", http.StatusInternalServerError)
 			return
 		}
 		data["running"] = true
-
+		err = json.Unmarshal([]byte(statReport.requestLagDone), &rd)
+		if err != nil {
+			http.Error(w, "Stats error", http.StatusInternalServerError)
+			return
+		}
 		// iterate over models and map modelId to requests per second.
 		ts := time.Now()
 		records := make([]*CsvMetric, 0)
@@ -254,7 +259,11 @@ func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
 			}
 			records = append(records, csv)
 		}
+		for k, v := range rd {
+			rdone[k] = v
+		}
 		data["stats"] = stats
+		data["rdone"] = rdone
 		if app.reportfile != nil {
 			if err := WriteCsv(app.reportfile, records); err != nil {
 				log.Printf("failed to write csv stats in /stats handler: %v", err)

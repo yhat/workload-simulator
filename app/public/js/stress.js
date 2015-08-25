@@ -28,7 +28,9 @@ function onWorkloadReceive(data, textStatus, jqXHR) {
     else
     {
         var total_qps = 0;
+        var total_rdone = 0;
         stats = data['stats'];
+	rdone = data['rdone'];
 	
         for (var i in stats)
         {
@@ -36,8 +38,14 @@ function onWorkloadReceive(data, textStatus, jqXHR) {
             total_qps += qps_number;
             query_widget_map[i].setDialValue(qps_number);
         }
+
+	for (var j in rdone)
+	{
+	    var rdone_number = parseFloat(rdone[i]);
+	    total_rdone += rdone_number;
+	}
         qps_graph.record_point(total_qps);
-	r_lag_graph.record_point(total_qps);
+	r_lag_graph.record_point(total_rdone);
         setTimeout(updateWorkloadLoop, 100);
     }
 }

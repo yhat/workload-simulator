@@ -27,7 +27,8 @@ type Report struct {
 	user    string
 
 	// requests per second
-	requestPerS string
+	requestPerS    string
+	requestLagDone string
 
 	// cumulative stats
 	requestSent int
@@ -61,6 +62,7 @@ func StatsMonitor(report chan<- *Report, dt time.Duration) chan *Stat {
 
 	// maps modelId to req/s for the front end.
 	requestPerSec := make(map[string]int)
+	requestLagDone := make(map[string]int)
 
 	// other stats not used in the front end.
 	requestMetrics := make(map[string]Metric)
@@ -76,15 +78,23 @@ func StatsMonitor(report chan<- *Report, dt time.Duration) chan *Stat {
 					return
 				}
 				b := bytes.NewBuffer(r)
+
+				rd, err := json.Marshal(requestLagDone)
+				if err != nil {
+					fmt.Printf("error marshalling json stats: %v\n", err)
+					return
+				}
+				bd := bytes.NewBuffer(rd)
 				report <- &Report{
-					batchId:     bid,
-					modelName:   mn,
-					modelId:     mid,
-					opsHost:     host,
-					user:        user,
-					requestPerS: b.String(),
-					requestSent: isent,
-					requestDone: idone,
+					batchId:        bid,
+					modelName:      mn,
+					modelId:        mid,
+					opsHost:        host,
+					user:           user,
+					requestPerS:    b.String(),
+					requestLagDone: bd.String(),
+					requestSent:    isent,
+					requestDone:    idone,
 				}
 			case s := <-stats:
 				// increment state counters
@@ -104,6 +114,7 @@ func StatsMonitor(report chan<- *Report, dt time.Duration) chan *Stat {
 				newStat := Metric{isent, idone, int(reqPerS)}
 				requestMetrics[mid] = newStat
 				requestPerSec[mid] = int(reqPerS)
+				requestLagDone[mid] = idone
 			}
 		}
 	}()
