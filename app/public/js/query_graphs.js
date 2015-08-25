@@ -5,7 +5,7 @@ Highcharts.setOptions({
 colors: ['#26ADE4']
 });
 
-var chartConfig =  {
+var QPSConfig =  {
     chart: {
                renderTo: 'qps-graph',
                type: 'spline',
@@ -80,12 +80,88 @@ var chartConfig =  {
             }]
 }
 
-function QueryGraph(title)
+var rLagConfig =  {
+    chart: {
+               renderTo: 'r-lag-graph',
+               type: 'spline',
+               events: {
+                   load: null /*function() {
+                             // set up the updating of the chart each second
+                             var series = this.series[0];
+                             setInterval(function() {
+                                 var x = (new Date()).getTime(), // current time
+                                 y = Math.random() / 5 + 0.8;
+                             series.addPoint([x, y]); //, true, true);
+                             }, 100);
+                         }*/
+               }
+           },
+    plotOptions: {
+                     series : {
+                                  lineWidth: 1,
+                                  marker: {
+                                      enabled: false
+                                  }
+                              }
+                 },
+    title: {
+               text: 'Live random data'
+           },
+    xAxis: {
+               type: 'datetime',
+               tickPixelInterval: 100
+           },
+    yAxis: {
+               title: {
+                          text: 'Requests Per Second'
+                      },
+               plotLines: [{
+                              value: 0,
+                              width: 1,
+                              color: '#808080'
+                          }]
+           },
+    tooltip: {
+                 formatter: function() {
+                                return '<b>'+ this.series.name +'</b><br/>'+
+                                    Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +'<br/>'+
+                                    Highcharts.numberFormat(this.y, 2);
+                            }
+             },
+    legend: {
+                enabled: false
+            },
+    exporting: {
+                   enabled: false
+               },
+    series: [{
+                name: 'Random data',
+                data:null
+                    /*
+                (function() {
+                    // generate an array of random data
+                    var data = [],
+                time = (new Date()).getTime(),
+                i;
+                for (i = -19; i <= 0; i++) {
+                    data.push({
+                        x: time + i * 1000,
+                        y: Math.random()
+                    });
+                }
+                return data;
+                })()
+                */
+            }]
+}
+
+
+function QueryGraph(title, config)
 {
     var _this = this;
 
     _this.initialize = function(title) {
-        _this.config = $.extend(true, {}, chartConfig);
+        _this.config = $.extend(true, {}, config);
         console.log(_this.config);
         _this.config.title.text = title;
         _this.config.chart.events.load = function() { };

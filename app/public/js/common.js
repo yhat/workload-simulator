@@ -499,7 +499,8 @@ function resetConsole() {
 // 
 
 $(document).ready(function() {
-    qps_graph = new QueryGraph("Requests Per Second");
+    qps_graph = new QueryGraph("Requests Per Second", QPSConfig);
+    r_lag_graph = new QueryGraph("Requests Lag", rLagConfig);
 
     reloadDialMaxValue();
 
