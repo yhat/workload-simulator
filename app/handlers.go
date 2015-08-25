@@ -3,8 +3,10 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -30,6 +32,7 @@ func (app *App) handleRoot(w http.ResponseWriter, r *http.Request) {
 	app.Render("index", w, r, data)
 }
 
+// structs to parse workload JSON.
 type modelData struct {
 	Query string
 	QPS   string
@@ -117,6 +120,20 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 
 		}
 
+		// Open file for csv output on a per workload basis.
+		// The pause button event should close this file.
+		batchId, err := uuid()
+		if err != nil {
+			log.Printf("error generating uuid: %v", err)
+		}
+
+		filename := app.config.ReportDir + "/" + "workload_data_" + batchId
+		outfile, err := os.Create(filename)
+		if err != nil {
+			log.Printf("failed to create report file: %v", err)
+		}
+		app.reportfile = outfile
+
 		// Spawn goroutines and randomly assign work
 		n := len(wrk)
 		if n == 0 {
@@ -135,6 +152,9 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 			modelId := strconv.Itoa(rand.Intn(n))
 			model := wrk[modelId]
 			work := &Workload{
+				dt:         500 * time.Millisecond,
+				batchId:    batchId,
+				workerId:   i,
 				opsHost:    settings.OpsHost,
 				apiKey:     settings.ApiKey,
 				user:       settings.User,
@@ -143,7 +163,7 @@ func (app *App) handleWorkload(w http.ResponseWriter, r *http.Request) {
 				modelName:  model.name,
 				modelInput: model.input,
 			}
-			Worker(app.Statc, app.Killc, 500*time.Millisecond, i, work)
+			Worker(app.Statc, app.Killc, work)
 		}
 	default:
 		http.Error(w, "I only respond to POSTs.", http.StatusNotImplemented)
@@ -184,6 +204,14 @@ func (app *App) handlePause(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < nw; i++ {
 		app.Killc <- 1
 	}
+	// avoid trying to close a nil file handler
+	if app.reportfile != nil {
+		err := app.reportfile.Close()
+		if err != nil {
+			log.Printf("failed to close report file: %v", err)
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
@@ -194,18 +222,38 @@ func (app *App) handleStats(w http.ResponseWriter, r *http.Request) {
 	stats := make(map[string]int)
 	select {
 	case statReport := <-app.Reportc:
-		var report map[string]int
-		err := json.Unmarshal([]byte(statReport), &report)
+		var r map[string]int
+
+		err := json.Unmarshal([]byte(statReport.requestData), &r)
 		if err != nil {
 			http.Error(w, "Stats error", http.StatusInternalServerError)
 			return
 		}
 		data["running"] = true
-		for k, v := range report {
+
+		// iterate over models and map modelId to requests per second.
+		ts := time.Now()
+		records := make([]*CsvMetric, 0)
+		for k, v := range r {
 			stats[k] = int(v)
+			csv := &CsvMetric{
+				ts:           ts,
+				batchId:      statReport.batchId,
+				opsHost:      app.config.OpsHost,
+				opsUser:      app.config.OpsUser,
+				opsModelName: statReport.modelName,
+				reqSent:      statReport.requestSent,
+				reqComplete:  statReport.requestDone,
+				reqPerSec:    v,
+			}
+			records = append(records, csv)
 		}
 		data["stats"] = stats
-
+		if app.reportfile != nil {
+			if err := WriteCsv(app.reportfile, records); err != nil {
+				log.Printf("failed to write csv stats in /stats handler: %v", err)
+			}
+		}
 	case <-time.After(time.Second):
 		data["running"] = false
 	}

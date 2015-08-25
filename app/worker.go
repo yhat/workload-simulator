@@ -1,9 +1,11 @@
 package app
 
 import (
-	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -11,6 +13,11 @@ import (
 )
 
 type Workload struct {
+	// unique worker id info
+	dt       time.Duration
+	batchId  string
+	workerId int
+
 	// remote ops server info
 	opsHost string
 	apiKey  string
@@ -40,6 +47,46 @@ func (w *Workload) Predict() error {
 	return nil
 }
 
+// Worker func that spawns a goroutine that does work and emits statistics to a stats
+// channel every period duration seconds.
+func Worker(stats chan *Stat, kill <-chan int, w *Workload) {
+	// TODO add predicitons made vs pred completed.
+	id := w.workerId
+	batchId := w.batchId
+	dt := w.dt
+	go func(id int, batchId string, n int, dt time.Duration) {
+		predCount := 0
+		predSent := 0
+		ticker := time.NewTicker(dt)
+		for i := 0; i < n; i++ {
+			predSent += 1
+			fmt.Printf("id: %d, cnt:%+v\n", id, predCount)
+			select {
+			case <-ticker.C:
+				// send stats and reset request counter
+				// TODO: add predSent to Stat struct
+				s := &Stat{batchId, w.modelId, w.modelName, predSent, predCount, dt.Seconds()}
+				stats <- s
+				predCount = 0
+			case <-kill:
+				fmt.Printf("id: %d: SIGKILL good-bye!!!", id)
+				return
+			default:
+				// Do work and increment counter
+				err := w.Predict()
+				if err != nil {
+					fmt.Printf("Prediction error: %v\n", err)
+					return
+				}
+				predCount += 1
+			}
+		}
+		// exit goroutine when work is done.
+		return
+	}(id, batchId, w.nrequests, dt)
+	return
+}
+
 func opsPredictHTTP(username, model, apikey, host string, input interface{}) (*http.Response, error) {
 	url := host + "/" + username + "/models/" + model + "/"
 	b, err := json.Marshal(input)
@@ -63,89 +110,10 @@ func opsPredictHTTP(username, model, apikey, host string, input interface{}) (*h
 	return resp, nil
 }
 
-// Worker func that spawns a goroutine that does work and emits statistics to a stats
-// channel every period duration seconds.
-func Worker(stats chan<- *Stat, kill <-chan int, dt time.Duration, id int, w *Workload) {
-	// TODO add predicitons made vs pred completed.
-
-	go func(id, n int, dt time.Duration) {
-		predCount := 0
-		predSent := 0
-		ticker := time.NewTicker(dt)
-		for i := 0; i < n; i++ {
-			predSent += 1
-			fmt.Printf("id: %d, cnt:%+v\n", id, predCount)
-			select {
-			case <-ticker.C:
-				// send stats and reset request counter
-				// TODO: add predSent to Stat struct
-				s := &Stat{w.modelId, predSent, predCount, dt.Seconds()}
-				stats <- s
-				predCount = 0
-			case <-kill:
-				fmt.Printf("id: %d: SIGKILL good-bye!!!", id)
-				return
-			default:
-				// Do work and increment counter
-				err := w.Predict()
-				if err != nil {
-					fmt.Printf("Prediction error: %v\n", err)
-					return
-				}
-				predCount += 1
-			}
-		}
-		// exit goroutine when work is done.
-		return
-	}(id, w.nrequests, dt)
-	return
-}
-
-// Stat represents request statistics
-type Stat struct {
-	modelId  string
-	nreqSent int
-	nreqDone int
-	dt       float64
-}
-
-type Metric struct {
-	reqSent     int
-	reqComplete int
-	reqPerSec   int
-}
-
-func StatsMonitor(report chan<- string, dt time.Duration) chan *Stat {
-	stats := make(chan *Stat)
-	// TODO: Merge these stats into one map after we figure out how
-	// to change the front end.
-	requestPerSec := make(map[string]int)
-	requestMetrics := make(map[string]Metric)
-	reqSent := 0
-	reqDone := 0
-	ticker := time.NewTicker(dt)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				// send report of stats.
-				r, err := json.Marshal(requestPerSec)
-				if err != nil {
-					fmt.Printf("error marshalling json stats: %v\n", err)
-					return
-				}
-				b := bytes.NewBuffer(r)
-				report <- b.String()
-			case s := <-stats:
-				reqs := float64(s.nreqDone) / s.dt
-				reqSent += s.nreqSent
-				reqDone += s.nreqDone
-				newStat := Metric{reqSent, reqDone, int(reqs)}
-				requestMetrics[s.modelId] = newStat
-				requestPerSec[s.modelId] = int(reqs)
-			}
-
-		}
-	}()
-	return stats
+func uuid() (string, error) {
+	b := make([]byte, 16)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }

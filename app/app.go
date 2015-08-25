@@ -43,9 +43,12 @@ type App struct {
 	// http router
 	router http.Handler
 
+	// report file handle
+	reportfile *os.File
+
 	// channels for workers and statMonitor
 	Killc   chan int
-	Reportc chan string
+	Reportc chan *Report
 	Statc   chan *Stat
 }
 
@@ -58,6 +61,7 @@ func New(config *Config) (*App, error) {
 	if config.Web.PublicDir == "" {
 		config.Web.PublicDir = "/var/workload-simulator/public/static"
 	}
+
 	// create a new app config from config yaml and a new App.
 	// OpsConfig can be nil on start since it is specified by the UI.
 	appCfg := AppConfig{
@@ -79,7 +83,7 @@ func New(config *Config) (*App, error) {
 	// Register handlers with ServeMux.
 	r := http.NewServeMux()
 
-	// Static assets
+	// Static assets.
 	pubDir := config.Web.PublicDir
 	serveStatic := func(name string) {
 		fs := http.FileServer(http.Dir(filepath.Join(pubDir, name)))

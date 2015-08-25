@@ -33,7 +33,7 @@ func main() {
 
 	// Init communication channels for StatsMonitor and Workers
 	killc := make(chan int)
-	reportc := make(chan string)
+	reportc := make(chan *app.Report)
 	defer close(killc)
 	defer close(reportc)
 
