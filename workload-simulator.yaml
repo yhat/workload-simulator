@@ -1,7 +1,7 @@
 # workload-simulator configuration
 
 web:
-    hostname:   localhost
+    hostname:   0.0.0.0
     http_port:  8080
     public_dir: /go/src/github.com/yhat/workload-simulator/app/public
     views_dir: /go/src/github.com/yhat/workload-simulator/app/views

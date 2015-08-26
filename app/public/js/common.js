@@ -519,7 +519,6 @@ $(document).ready(function() {
         else
         {
             hideSettings();
-            jqconsole.Focus();
             $(window).trigger('settingsUpdated');
         }
     });

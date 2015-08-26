@@ -1,0 +1,12 @@
+# workload-simulator configuration
+
+web:
+    hostname:   0.0.0.0
+    http_port:  8080
+    public_dir: /home/ec2/gopath/src/github.com/yhat/workload-simulator/app/public
+    views_dir: /home/ec2/gopath/src/github.com/yhat/workload-simulator/app/views
+    report_dir: /home/ec2/workload_sim
+
+settings:
+    max_dial: 20
+    max_workers: 30

@@ -15,7 +15,7 @@ RUN godep go install -v ./...
 RUN mkdir -p /root/workload_sim
 
 # Run the outyet command by default when the container starts.
-ENTRYPOINT workload-simulator -config workload-simulator.yaml
+ENTRYPOINT workload-simulator -config /go/src/github.com/yhat/workload-simulator/workload-simulator.yaml
 
 # Document that the service listens on port 8080.
 EXPOSE 8080
